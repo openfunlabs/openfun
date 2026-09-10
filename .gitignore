@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.output/
+.worktrees/
+.godot/
+*.sqlite*
+*.openfun
+.DS_Store
+__pycache__/
+*.pyc
