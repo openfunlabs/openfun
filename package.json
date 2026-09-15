@@ -16,6 +16,7 @@
     "tools/blender/build.py",
     "tools/godot/*.gd",
     "docs/game-design/*.md",
+    "docs/diagrams/*",
     "tools/blender/LICENSE",
     "docs/runtime-protocol.md",
     "README.md",

@@ -92,9 +92,10 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
   assert.equal(readFileSync(join(legacy, "settings.json"), "utf8"), original);
   for (const name of ["README.md", "README.zh-CN.md"]) {
     const readme = readFileSync(join(env.PI_PACKAGE_DIR!, name), "utf8");
+    assert.ok(readme.includes("](openfun-diagrams/architecture.svg)"));
     assert.ok(
-      readme.includes(
-        "](https://raw.githubusercontent.com/openfunlabs/openfun/main/docs/diagrams/architecture.svg)",
+      existsSync(
+        join(env.PI_PACKAGE_DIR!, "openfun-diagrams/architecture.svg"),
       ),
     );
     assert.ok(
@@ -104,9 +105,10 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
     );
     const other = name === "README.md" ? "README.zh-CN.md" : "README.md";
     assert.ok(readme.includes("](#roadmap)"));
+    assert.ok(readme.includes("](openfun-diagrams/architecture.excalidraw)"));
     assert.ok(
-      readme.includes(
-        "](https://github.com/openfunlabs/openfun/blob/main/docs/diagrams/architecture.excalidraw)",
+      existsSync(
+        join(env.PI_PACKAGE_DIR!, "openfun-diagrams/architecture.excalidraw"),
       ),
     );
     assert.ok(readme.includes(`](${other})`));

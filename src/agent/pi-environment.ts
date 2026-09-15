@@ -57,17 +57,21 @@ export function preparePiPackage(): string {
       process.platform === "win32" ? "junction" : "dir",
     );
   }
+  cpSync(
+    join(projectRoot, "docs", "diagrams"),
+    join(target, "openfun-diagrams"),
+    {
+      recursive: true,
+    },
+  );
   for (const name of ["README.md", "README.zh-CN.md"]) {
     // Keep repository links branch-relative in source. Runtime docs belong to pi.
-    const readme = readFileSync(join(projectRoot, name), "utf8").replace(
-      /(!?\[[^\]]*\])\((docs\/[^)]+|LICENSE|THIRD_PARTY_NOTICES\.md)\)/g,
-      (_match, label: string, path: string) => {
-        const base = label.startsWith("!")
-          ? "https://raw.githubusercontent.com/openfunlabs/openfun/main"
-          : "https://github.com/openfunlabs/openfun/blob/main";
-        return `${label}(${base}/${path})`;
-      },
-    );
+    const readme = readFileSync(join(projectRoot, name), "utf8")
+      .replaceAll("](docs/diagrams/", "](openfun-diagrams/")
+      .replace(
+        /\]\((docs\/[^)]+|LICENSE|THIRD_PARTY_NOTICES\.md)\)/g,
+        "](https://github.com/openfunlabs/openfun/blob/main/$1)",
+      );
     writeFileSync(join(target, name), readme);
   }
   // Keep the engine's real VERSION for its protocol/internal logic. Its release
