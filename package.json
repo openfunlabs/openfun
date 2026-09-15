@@ -29,8 +29,8 @@
     "prepack": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
-    "format": "prettier --write src tests scripts package.json tsconfig*.json README.md README.zh-CN.md CONTRIBUTING.md docs",
-    "format:check": "prettier --check src tests scripts package.json tsconfig*.json README.md README.zh-CN.md CONTRIBUTING.md docs",
+    "format": "prettier --write src tests scripts package.json tsconfig*.json README.md README.zh-CN.md docs",
+    "format:check": "prettier --check src tests scripts package.json tsconfig*.json README.md README.zh-CN.md docs",
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "test:e2e": "node --import tsx tests/e2e/run.mjs",
     "test:live": "node --import tsx tests/live/run.mjs"

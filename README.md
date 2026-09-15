@@ -2,73 +2,166 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-**OpenFun is an open-source AI game creation and runtime framework for generating an initial world (epoch0) and continuously expanding its content and assets during play.**
+**OpenFun is an open-source AI game creation and runtime framework for generating an initial world and continuously expanding its content and assets during play.**
 
-Describe the game you want to make, shape its initial world and rules, and let later play develop new places, characters, items, stories, and eventually mechanics. OpenFun is designed for people who have never used a game engine, while keeping the generated Godot project accessible to experienced developers.
+Describe the game you want to make, shape its initial world and rules, and let later play develop new places, characters, items, stories, and eventually mechanics. OpenFun is friendly to both people who have never used a game engine and experienced game developers.
 
-This repository is an early feasibility prototype. The first product milestone focuses on **2D games**; the [roadmap](docs/roadmap.md) then moves toward basic 3D, richer open worlds, and more game genres.
+[Installation](#installation) · [Usage](#usage) · [Architecture](#architecture) · [Roadmap](#roadmap)
 
-## How it works
+## Installation
 
-- **Create epoch0.** The creator defines the initial content, assets, and rules. This can be a substantial world with its own systems and progression.
-- **Keep creating during play.** OpenFun uses player actions and world state to generate subsequent content and assets. Updates are discrete; the game keeps running between them.
-- **Run with Godot.** Godot handles input, game logic, physics, and rendering. OpenFun manages creation, generation, and persistence around it.
+You need **Node.js 22.19+** and, for the current version, **Godot 4**. The agent runtime is bundled.
 
-The target is to make the same creative capabilities available during authoring and play. See the concise [architecture](docs/architecture.md), including why we chose Godot.
+One-command installation is planned once the npm package is published:
 
-## What works today
+```sh
+npm install -g --ignore-scripts openfun
+```
 
-The CLI bundles pi for conversation, model selection, and authoring. The agent edits a real Godot project; `/play` starts Godot and a local Host that queues content requests, enforces a request budget, and saves generated results and player progress.
+The package is not published to npm yet. Use the source installation below for now.
 
-| Available in the prototype                                   | Still ahead                                                               |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Godot authoring, including experimental 3D tools             | A dependable 2D creation and continuous generation experience             |
-| Structured runtime content using existing scripts and assets | New assets and mechanics generated and activated during play              |
-| Local projects, persistence, and world package import/export | Separate epoch0 releases and evolving world saves                         |
-| Text model selection through pi                              | Independently configurable media providers and local multimodal inference |
+<details>
+<summary>Install from source</summary>
 
-Current image generation uses a specific pi/Codex integration. Providers are intended to be configurable by capability; no particular text or image model defines OpenFun. Current restrictions are documented in [configuration](docs/configuration.md) and [assets](docs/assets.md).
-
-## Get started
-
-You need **Node.js 22.19+**, **pnpm**, and **Godot 4**. Blender is optional for existing 3D workflows. Engines and large models are installed separately; a global pi installation is unnecessary.
-
-Build and install from this repository:
+Install pnpm, then run:
 
 ```sh
 git clone https://github.com/openfunlabs/openfun.git
 cd openfun
 pnpm install --frozen-lockfile
-pnpm build
-pnpm pack --pack-destination .output
-npm install --global --ignore-scripts ./.output/openfun-<version>.tgz
+pnpm pack --out .output/openfun.tgz
+npm install -g --ignore-scripts ./.output/openfun.tgz
+```
+
+Packing also builds the project. Skipping dependency install scripts prevents them from changing other clients' configuration.
+
+</details>
+
+## Usage
+
+```sh
 openfun setup
 mkdir my-world
 cd my-world
 openfun
 ```
 
-Replace `<version>` with the version in `package.json`. The global install skips dependency scripts to prevent Context Mode from changing other clients' configuration.
+Use `/login` to sign in and `/model` to choose a model. Describe your game, create its initial world, and use `/play` to open the game window.
 
-Use `/model` to choose a model and `/login` when needed. OpenFun uses its own profile in `~/.openfun/agent/`. Describe your game and let the agent create it before using `/play`: a new project starts with a blank Godot scene.
+| Command                        | Purpose                                      |
+| ------------------------------ | -------------------------------------------- |
+| `/play`                        | Start the game and local generation service  |
+| `/play --generation-budget 24` | Set this session's generation request budget |
+| `/stop`                        | Stop the game and generation service         |
+| `/world`                       | Inspect the current project                  |
+| `/new`                         | Start a new conversation in the same world   |
 
-| Command                        | Purpose                                           |
-| ------------------------------ | ------------------------------------------------- |
-| `/play`                        | Start the current game and its local Host         |
-| `/play --generation-budget 24` | Set this play session's generation request budget |
-| `/stop`                        | Stop the game and Host                            |
-| `/world`                       | Inspect the current project                       |
-| `/new`                         | Start a new conversation in the same world        |
+OpenFun uses the current directory as the world. To switch projects, exit, change directories, and run `openfun` again.
 
-OpenFun opens the current directory. To work on another game, exit, change directories, and run `openfun` again. See [CLI workflows](docs/implementation.md#cli-workflows) for checks, previews, packaging, and the optional polish loop.
+<details>
+<summary>Configuration and advanced commands</summary>
 
-## Documentation
+- **Models and login:** OpenFun keeps its own profile in `~/.openfun/agent/`; use `OPENFUN_HOME` to change the data root. Authoring and background generation currently use the world's saved model preference. The built-in image tool currently uses OpenFun's Codex login with a Codex conversation model; independent media providers are part of the design below.
+- **Tools:** `openfun setup` saves discovered engine paths. Set `OPENFUN_GODOT` for an explicit engine path. Use `/mcp` for MCP services and `/ctx-stats` for Context Mode. Defaults can be configured in `~/.openfun/plugins.json`; the asset-library extension is currently controlled by `assets3d`.
+- **Budget:** The default is 12 generation requests per play session, with a range of 0–100. Failed attempts count; zero allows reuse of saved content without new requests.
+- **Diagnostics:** `openfun doctor` checks configuration. `/about` shows runtime versions. Use `openfun -- --verbose` for detailed startup output.
 
-- [Architecture](docs/architecture.md) · [Roadmap](docs/roadmap.md)
-- [Current implementation](docs/implementation.md) · [Configuration](docs/configuration.md) · [Assets](docs/assets.md)
-- [Runtime protocol](docs/runtime-protocol.md) · [World format](docs/world-format.md)
-- [Contributing and tests](CONTRIBUTING.md) · [Game quality evaluation](docs/evaluation.md)
+Standalone project commands:
+
+```sh
+openfun create ./arena --no-chat
+openfun check ./arena
+openfun preview ./arena --demo
+openfun play ./arena
+openfun pack ./arena --output ./arena.openfun
+openfun import ./arena.openfun ./shared-arena
+openfun play ./shared-arena --trust-project
+```
+
+Creation starts from a blank project; `--template /path/to/project` selects your own starting project. Current world packages contain the project, generated content, and saves. Imported executable projects require explicit trust. Credentials are excluded from sharing.
+
+Checks and previews make no new model requests. Previews are headless by default; ask the agent to use `world_preview_game` with `mode: "windowed"` for actual rendered frames. Previewing is separate from verifying generation, activation, saving, and recovery during play.
+
+For optional continued refinement, use `/polish [focus]`. Inspect with `/polish status`, pause with `/polish stop`, resume with `/polish resume`, or discard with `/polish discard`. The loop has no fixed round or time limit. It works on a candidate copy, and applying it with `/polish apply` requires a stopped game. Existing saves are preserved.
+
+</details>
+
+## Architecture
+
+The design centers on **content, assets, and a game engine**. The goal is to make the same creative capabilities available during authoring and play.
+
+![OpenFun architecture](docs/diagrams/architecture.svg)
+
+[Editable Excalidraw diagram](docs/diagrams/architecture.excalidraw)
+
+| Part            | Responsibility                                                                                      |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| **Content**     | World settings, rules, mechanics, behavior code, characters, items, and narrative                   |
+| **Assets**      | Images, animation, audio, video, 3D resources, and their composition into scenes, maps, and regions |
+| **Game engine** | Input, simulation, game state, physics, rendering, and activation of prepared updates               |
+
+### Initial world and ongoing generation
+
+The creator defines the content, assets, and rules at **t0 / epoch0**, including constraints for future development. This can be an entire playable world.
+
+During play, player actions and world state inform later updates: generate content and assets, prepare and validate them, activate them at a suitable point, then persist the results. These updates form later epochs; they can happen independently and reuse unchanged content. The engine keeps running between updates.
+
+Maps can use tiles, chunks, graphs, or other representations appropriate to the game. New mechanics require compatible code and state changes as well as assets. Prepared content is distinct from what a player has encountered; revisits and restored saves reuse accepted results.
+
+Publishing is designed around an epoch0 release. Each playthrough creates an evolving world instance with its own later content and saves. A multiplayer instance shares accepted updates and an authoritative world state.
+
+### Agent, engine, and models
+
+The **current agent is built on pi, and the current game runtime uses Godot**. Godot's [MIT license](https://godotengine.org/license/), compact node/scene structure, and [runtime resource loading](https://docs.godotengine.org/en/stable/tutorials/export/exporting_pcks.html) make it a practical starting point. Future versions may migrate to or support other engines as the project develops.
+
+Text/code models produce content, logic, and generation instructions. New media assets come from image, video, audio, and 3D generation models; suitable existing assets can also be reused. Code handles logic, layout, collision, and integration.
+
+The design supports configuring providers by capability, including local and cloud models. No particular text or media model defines OpenFun. Generation can work ahead of play to balance latency, quality, and cost.
+
+## Roadmap
+
+| Stage                | Target experience                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **2D games**         | Terraria-like worlds that generate new regions, monsters, items, assets, and stories during play, with tested mechanic updates and persistent player consequences |
+| **Basic 3D games**   | Minecraft-like worlds with new map chunks, monsters, and items, supported by streaming, spatial interaction, and a 3D asset pipeline                              |
+| **Rich open worlds** | Long-term ambition toward the scale, systemic depth, and presentation of games such as Fallout and GTA                                                            |
+
+Expand toward roguelites, platformers, card games, and other genres as the foundation matures. Each stage should demonstrate enjoyable play, consistent world state, reliable recovery, and manageable generation costs.
+
+### Local inference
+
+Work toward user-configurable, locally runnable **diffusion models for text, images, video, audio, and 3D** to lower the ongoing cost of play. Adoption depends on model availability, hardware, latency, and quality; cloud providers remain an option.
+
+### OpenFun Cloud
+
+**OpenFun Cloud is the planned UGC platform for creating, publishing, sharing, and playing continuously evolving AI games.**
+
+- Publish, discover, and remix epoch0 releases with their initial content, assets, and rules.
+- Host persistent worlds and multiplayer sessions with shared generation results.
+- Provide managed inference for hosted games, including cloud multiplayer.
+- Enable mobile creation and play through cloud rendering, with attention to latency, touch controls, bandwidth, and GPU cost.
+
+Cloud services can develop alongside 2D and 3D support. Cloud rendering and model inference are separate capabilities.
+
+## Development
+
+<details>
+<summary>Build, test, and internal references</summary>
+
+Use Node.js 22.19+ and the pnpm version pinned in `package.json`:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm check
+pnpm format:check
+```
+
+`check` runs type checking, unit/integration tests, and the build. It makes no model calls. Engine acceptance tests and live model tests run separately; model tests consume quota.
+
+Keep personal worlds outside the repository and test output in `.output/`. Keep both READMEs in sync. Runtime protocol and game-design guides remain internal resources used by the agent; [world format](docs/world-format.md) and [evaluation](docs/evaluation.md) are developer references.
+
+</details>
 
 ## License
 
-OpenFun is [MIT licensed](LICENSE). Dependencies and external tools retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+OpenFun is [MIT licensed](LICENSE). Dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).

@@ -94,7 +94,7 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
     const readme = readFileSync(join(env.PI_PACKAGE_DIR!, name), "utf8");
     assert.ok(
       readme.includes(
-        "](https://github.com/openfunlabs/openfun/blob/main/docs/roadmap.md)",
+        "](https://raw.githubusercontent.com/openfunlabs/openfun/main/docs/diagrams/architecture.svg)",
       ),
     );
     assert.ok(
@@ -103,6 +103,12 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
       ),
     );
     const other = name === "README.md" ? "README.zh-CN.md" : "README.md";
+    assert.ok(readme.includes("](#roadmap)"));
+    assert.ok(
+      readme.includes(
+        "](https://github.com/openfunlabs/openfun/blob/main/docs/diagrams/architecture.excalidraw)",
+      ),
+    );
     assert.ok(readme.includes(`](${other})`));
     assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, other)));
   }
