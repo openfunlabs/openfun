@@ -1,7 +1,7 @@
 {
   "name": "openfun",
   "version": "0.1.0-alpha.37",
-  "description": "Create, explore, and share persistent games with pi, Godot, and Blender",
+  "description": "An open-source AI game creation and runtime framework for generating an initial world and expanding it during play",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -19,6 +19,7 @@
     "tools/blender/LICENSE",
     "docs/runtime-protocol.md",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
   ],
@@ -28,8 +29,8 @@
     "prepack": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
-    "format": "prettier --write src tests scripts package.json tsconfig*.json README.md CONTRIBUTING.md docs",
-    "format:check": "prettier --check src tests scripts package.json tsconfig*.json README.md CONTRIBUTING.md docs",
+    "format": "prettier --write src tests scripts package.json tsconfig*.json README.md README.zh-CN.md CONTRIBUTING.md docs",
+    "format:check": "prettier --check src tests scripts package.json tsconfig*.json README.md README.zh-CN.md CONTRIBUTING.md docs",
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "test:e2e": "node --import tsx tests/e2e/run.mjs",
     "test:live": "node --import tsx tests/live/run.mjs"

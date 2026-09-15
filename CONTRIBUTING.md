@@ -1,6 +1,6 @@
-# 开发 OpenFun
+# Developing OpenFun
 
-使用 Node.js 22.19+ 与 package.json 固定的 pnpm 版本。单包开发，不使用 Bun，不另行安装全局 pi。
+Use Node.js 22.19+ and the pnpm version pinned in `package.json`. OpenFun is a single package; do not introduce Bun or install a separate global pi.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -9,41 +9,72 @@ pnpm format:check
 pnpm test:e2e
 ```
 
-`check` 包含 TypeScript 检查、单元/集成测试与干净构建。普通测试不调用模型；Host 和插件测试需要本机回环端口。`test:e2e` 需要本机 Godot、Blender，覆盖安装入口、pi 插件、玩法、资源和真实渲染。可用 OPENFUN_GODOT、OPENFUN_BLENDER 或 openfun setup 配置工具。用 `pnpm test:e2e -- --cli /path/to/openfun` 验证指定安装入口（直接传 `--cli` 也可）。
+`check` includes TypeScript checking, unit/integration tests and a clean build. Ordinary tests make no model calls; Host and plugin tests need loopback ports. `test:e2e` requires local Godot and Blender and covers installed entry points, pi extensions, gameplay, assets and rendering. Configure tools with `OPENFUN_GODOT`, `OPENFUN_BLENDER` or `openfun setup`. Use `pnpm test:e2e -- --cli /path/to/openfun` to check a specific installed entry point.
 
-真实模型验收与普通测试分开，必须显式选择场景、provider 和 model：
+## Repository structure
+
+See [current implementation](docs/implementation.md) for module ownership. The [architecture](docs/architecture.md) and [roadmap](docs/roadmap.md) describe the target rather than claiming it is already implemented. The next milestone is 2D; existing 3D/Meshy experiments are retained without being the current product focus.
+
+Builds compile only `src/` into `dist/`. The npm `files` allowlist includes product helpers, game-design guides, runtime protocol, READMEs and legal notices; tests and engine binaries are excluded. Resolve runtime resources from the package root and test resources from the test module, never a developer-specific path. Keep the English and Chinese README in sync when changing public behavior.
+
+`tests/fixtures/games/` contains engineering regression games only. New projects start blank; fixtures are never copied into creation or used to impersonate product-generated output. Product-quality evaluation follows [evaluation](docs/evaluation.md), separately from engineering tests.
+
+Keep test output in `.output/` and ordinary test worlds in system temporary directories. Install engines outside the repository, preferably under `~/.openfun/tools/`, and keep personal games in their own directories. Do not commit models, virtual environments, installation archives, personal sessions, credentials or experimental logs. Update the relevant topic document instead of adding a report for each internal test.
+
+Use a short-lived branch and independent worktree. Run checks appropriate to the change and report model/engine validation separately. Commit and PR operations follow the user's authorization; preserve existing player projects and uncommitted work.
+
+## Live model acceptance
+
+Live tests are explicit and separate from ordinary CI. Choose the scenario, provider and model:
 
 ```sh
 pnpm test:live creation <provider> <model>
-pnpm test:live chunks <provider> <model> <全新世界目录>
-pnpm test:live levels --run-live --world=<全新目录> --provider=<provider> --model=<model>
+pnpm test:live chunks <provider> <model> <new-world-directory>
+pnpm test:live levels --run-live --world=<new-directory> --provider=<provider> --model=<model>
 ```
 
-这些命令会消耗模型配额，默认 CI 不运行。用户已授权真实生成测试时，应直接运行与质量目标有关的实测，不把避免消耗额度作为跳过验收的理由；沿用已有授权，不重复索要同一许可。仍应保存任务 ID，避免因轮询、超时或重复下载而重复创建任务。
+These consume model quota and do not run in default CI. Once live generation is authorized, use relevant real acceptance tests within that authorization and budget. Retain task IDs so polling, timeouts or download retries do not create duplicate paid jobs. Creation, chunks and levels cover different paths; never label injected test data as model output.
 
-动画质量实测：先用图像参考生成角色，再查询 `world_animation_library` 选择真实的攻击、受击和死亡动作 ID。运行 `pnpm test:live animation <世界目录> <已有模型key> <修订前缀> <攻击ID> <受击ID> <死亡ID>`，完成真实绑定及三段动作，产物和用量回执保存在该世界的 `artifacts/animation/`。随后用 `tools/godot/animation_probe.gd` 检查实际导入骨骼、动作长度和各阶段画面，再进行正常速度的游戏内动作衔接验收。该探针的 JSON 配置为 `{ "clips": [{ "label": "death", "resource": "res://assets/generated/example.glb" }], "output": "/absolute/output" }`，用 Godot `--path <game> --script <探针绝对路径> -- <配置绝对路径>` 启动；需要真实渲染窗口。素材返回成功或静态骨骼检查不能代替画面与游戏测试。
+For a game with continuous generation, exercise unseen content during play, activation, saving and zero-budget restart/recovery. Source checks and previews alone do not test that path. See the [runtime guide](docs/game-design/runtime.md).
 
-创作、区块与关卡测试承担不同覆盖，不把示例或注入数据描述为模型输出。
+## Asset integration acceptance
 
-## 结构
+Public-service tests do not request model inference or paid generation:
 
-- src/agent：pi 集成、世界工具与创作指引。
-- src/world、src/generation：世界状态与持久内容生成。
-- src/godot、src/assets、src/sharing：引擎、资产与分享。
-- tests/fixtures/games/：仅供工程回归的游戏 fixture，不打包、不注入创作或产品评测。
-- tools/blender：产品调用的 Python 资产工作脚本，不存 Blender 安装。
-- tests/unit、integration、e2e、live、fixtures、helpers：按执行需求组织测试。
-- scripts/：构建和导出辅助。
-- docs/：当前架构、配置、资产、运行协议与世界格式。
+```sh
+pnpm test:live library .output/library-live
+pnpm test:live resources .output/resources-live
+```
 
-构建只编译 src/ 到 dist/，不编译或发布测试。npm files 白名单限制发行内容；协议文档随新游戏复制，其余开发文档只在源码中维护。运行时查找资源应相对于 package root，测试资源相对于测试模块，避免依赖工作目录或本机绝对路径。
+`library` checks Poly Haven/ambientCG search and import, textured glTF/material resources and offline reuse. `resources` checks Kenney sprites/audio/3D packs and indexed design-reference retrieval. Downloaded assets stay in the chosen output directory. Inspect actual resources in Godot before claiming visual quality; confirm sprite filtering, GLB texture dependencies and audio decoding. Successful loading does not establish enjoyable gameplay.
 
-测试产物集中在 .output/，普通测试世界使用系统临时目录。引擎推荐放到 ~/.openfun/tools/，作品放在独立工作目录。不要把大型模型、虚拟环境、旧安装包、实验日志或个人会话放入仓库。研究结论更新对应主题文档，不为每次内部测试添加一个版本报告。
+Paid image/Meshy test commands and recovery rules are documented in [assets](docs/assets.md).
 
-更改后运行相关测试、格式检查、构建及必要的真实引擎验证；模型实测单独报告。Git 使用短期分支与独立 worktree，提交和 PR 遵循项目协作授权。不要提交凭据或覆盖玩家作品。
+### Experimental 3D animation acceptance
 
-Free asset integration can be checked with `pnpm test:live library .output/library-live`. It searches both official catalogs, imports a textured glTF plus an ambientCG material set, and validates offline reuse without model requests or paid tasks. Inspect the imported resources in Godot before making visual-quality claims.
+Generate and inspect a character reference, then query `world_animation_library` for real attack, hit and death action IDs. With the corresponding Meshy generation authorized:
 
-`pnpm test:live resources .output/resources-live` checks actual Kenney sprite/audio/3D pack import and indexed reference retrieval, without paid/model calls. For engine acceptance, import the resources in Godot, inspect sprite filtering, resolve GLB texture dependencies and decode an audio sample. Asset loading is not gameplay or enjoyment validation.
+```sh
+pnpm test:live animation <world-directory> <existing-model-key> <revision-prefix> <attack-ID> <hit-ID> <death-ID>
+```
 
-产品质量评测遵循 [docs/evaluation.md](docs/evaluation.md)，与工程测试分开。新项目为空白 Godot 工程，不使用游戏示例作为创作起点。
+Artifacts and usage receipts are stored under that world's `artifacts/animation/`. Use `tools/godot/animation_probe.gd` to inspect imported skeletons, clip lengths and frames, then verify normal-speed transitions in the game. The probe requires rendered output and a JSON configuration such as:
+
+```json
+{
+  "clips": [
+    { "label": "death", "resource": "res://assets/generated/example.glb" }
+  ],
+  "output": "/absolute/output"
+}
+```
+
+Launch Godot with `--path <game> --script <absolute-probe-path> -- <absolute-config-path>`. A successful download or skeleton check is not animation-quality validation. See the [animation guide](docs/game-design/animation.md) for death presentation, retargeting, sprite workflows and material recovery helpers.
+
+The deterministic `node --import tsx tests/e2e/death-animation.mjs --visual` test captures lethal-hit, fall, rest, fade and cleanup stages with Godot; it makes no paid model calls and does not demonstrate production artwork.
+
+## Automated diagnostics
+
+Prefer headless Godot for functional checks. Headless mode does not verify rendered art, visible animation, audible audio or GPU performance. Use `world_preview_game` with `mode: "windowed"` when rendered checks are needed and record what was actually verified. Windowed diagnostics request no focus and release mouse capture; game code should respect `OPENFUN_AUTOMATED_TEST=1`. Use short meaningful cases and an isolated rendering display when available. Normal user-requested play remains interactive.
+
+See [preview behavior](docs/implementation.md#checks-and-previews) for scheduled input examples and measurement limits. Passing engineering tests does not prove that a game looks good or is fun.

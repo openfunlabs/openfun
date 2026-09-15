@@ -1,49 +1,59 @@
 # Architecture
 
-OpenFun is one Node.js package. The CLI launches pi's native interactive session; the agent edits a world-local Godot project, and a local authenticated World Host supplies AI content and persistent state. Blender authors assets. The creator and background workers reuse the player's provider/model/thinking choice.
+OpenFun manages a game's content and assets from its initial world (**epoch0**) through ongoing generation during play. Godot runs the game. This document describes the target architecture; [implementation.md](implementation.md) records the current prototype and its limitations.
 
-## Ownership
+![OpenFun architecture: models generate content and assets, Godot runs the game, and player actions feed later epochs](diagrams/architecture.svg)
 
-| Directory            | Responsibility                                                              |
-| -------------------- | --------------------------------------------------------------------------- |
-| src/agent            | pi session, bundled extensions, world tools and creation guidance           |
-| src/world            | World identity, specification, SQLite state and cwd-based discovery         |
-| src/generation       | Structured content jobs, 3D chunk generation and design context             |
-| src/godot            | Blank project initialization, playback, validation and isolated screenshots |
-| src/assets           | Blender worker invocation and GLB import                                    |
-| src/sharing          | Portable world archives, resource validation and import trust               |
-| src/host.ts          | Authenticated loopback HTTP and worker lifecycle                            |
-| tests/fixtures/games | Source-only regression fixtures; never installed or used in creation        |
-| tools/blender        | The product's constrained Python asset worker                               |
+[Editable Excalidraw source](diagrams/architecture.excalidraw)
 
-No-argument startup uses the exact invocation directory, never a parent or recent world. Each world has world.sqlite, WORLD.md, editable game/ and optional design/ notes. Native /new changes only the conversation; /world displays project information. To create or open another project, exit OpenFun and start it from the desired directory. There is no in-session world picker or project creation command. Existing project files are preserved.
+## Three parts
 
-## Generation and persistence
+| Part        | Responsibility                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Content** | World settings, rules, mechanics and behavior code, characters, items, progression, and narrative.                  |
+| **Assets**  | Images, animation, audio, video, and 3D resources, plus their composition into scenes, maps, and connected regions. |
+| **Engine**  | Input, simulation, gameplay state, physics, rendering, and activation of prepared content and assets.               |
 
-Generic /content/jobs accepts a project-defined schema, prompt and context. The worker adds bounded world/design documents and uses pi to produce structured data. Stable namespace/key pairs deduplicate work; conflicting requests are rejected, completed results persist, retries are explicit and failed requests never silently become procedural content. Project code validates reachability, difficulty and gameplay before activating a result. It should prefetch future levels and keep play responsive while waiting.
+OpenFun coordinates generation and persistence around these parts. Player actions and world state feed the next generation request. A map may be a graph, tile grid, chunked space, or another representation suitable for the game; the architecture does not prescribe one format for every genre.
 
-The exploration template also uses a specialized 32-meter chunk generator with boundaries and a restricted entity schema. This is separate from generic jobs because its navigation and publication rules differ. The queue starts only when /snapshot is requested. These tools do not limit the mechanics an agent can implement in Godot scripts.
+## Epoch0 and continuous play
 
-/game/state stores arbitrary bounded JSON with optimistic revisions. WorldStore stores structured entities, player changes and command deduplication. Single-player movement is client-simulated; authoritative multiplayer is not implemented.
+The creator authors **the content, assets, and rules at t0**, including the initial world and the constraints for its future development. Epoch0 can contain a whole playable world; its scope belongs to the creator.
 
-## Execution and sharing
+Later epochs represent committed content and asset updates. They may add a region, monster, item, story, or mechanic while reusing everything unchanged. Content and asset generation can proceed independently; an epoch is neither a simulation tick nor a requirement to regenerate the whole world.
 
-Godot receives the Host URL and bearer token at launch. Creator credentials never belong in game files. Background workers do not load creator sessions, skills, MCP extensions or project executable tools. Full Blender MCP modeling is not yet a background asset service.
+The engine runs continuously. Generation works ahead of the player where possible:
 
-Project checks run Godot import/script validation. Preview packages and imports a temporary world, disables new-model generation, renders an actual viewport and leaves the original save unchanged. Render success does not prove controls, artistic quality or progression.
+1. Read world rules, player consequences, and relevant existing content.
+2. Generate a candidate update and prepare its assets.
+3. Validate compatibility and activate it at a suitable gameplay boundary.
+4. Persist the accepted update and subsequent player state.
 
-Sharing includes Godot resources, public design notes, generated content and saves. Imports validate archive paths, limits and hashes before creating a destination and never execute code. An imported executable project requires explicit trust before play, check or preview. Private author configuration, credentials, symlinks and local backups are excluded. See [runtime protocol](runtime-protocol.md) and [world format](world-format.md).
+An unfinished or failed request leaves the current playable world available. Prepared content is distinct from content the player has encountered; revisits and restored saves reuse committed results. New mechanics require code validation and state compatibility, as well as asset loading.
 
-The published package includes only compiled product code, the Blender worker, the runtime protocol and legal notices. Tests, engine binaries, local worlds, historical experiments and development reports are excluded.
+**The long-term goal is creative parity between authoring and play**, including new scripts and mechanics. The current runtime worker only generates structured data for existing scripts and assets. The separate polish workflow still requires the game to stop before applying code changes.
 
-## Optional polish controller
+## Models and assets
 
-`src/polish/` adds an opt-in authoring loop, separate from the gameplay content Host. A native pi command or confirmed `world_offer_polish` starts a candidate-only bundled pi worker with the world's saved model preferences. No round, duration or call cap is imposed. Completion/no-gain judgments, blockers and user interruption stop the loop; normal tool timeouts and provider quotas still apply.
+Text/code models produce content, logic, and generation instructions. Media models produce new images, video, audio, and 3D assets; existing suitable assets can also be reused. Code handles composition, layout, collision, and integration. Hand-coded artwork is not a substitute for a media generation pipeline.
 
-The controller snapshots the candidate before each round, requires a native `world_polish_result` completion, and independently runs Godot import checks before accepting changed source. Worker reporting requires an error-free preview with returned images after the last mutation. The report is a model judgment, not a beauty score. Recent 20 reports form bounded worker context; complete reports and checkpoints remain on disk without limiting iteration count.
+Providers should be independently configurable by capability, with local and cloud backends behind the same conceptual boundary. Model names and providers are configuration choices. Latency, quality, and cost determine which tasks run ahead of play. Local diffusion models are a research and delivery direction in the [roadmap](roadmap.md), subject to actual hardware and quality results.
 
-Only `game/` and public `design/` files are promoted; source hashes detect concurrent edits, an active Host prevents promotion, original directories are retained, and a promotion journal supports interruption recovery on explicit apply/resume. The original database and player state are never replaced by candidate state. Source formats/sizes inherit the sharing pipeline limits. Meshy task identities are retained across candidate recovery to avoid duplicate submissions; native provider credentials remain in OpenFun's own profile. Candidate isolation is not an OS sandbox for authored code or MCP tools.
+## Why Godot
 
-`/polish stop`, user input, model changes and session shutdown stop the worker process group; an interrupted round is restored from its checkpoint on explicit resume. Restarting OpenFun never automatically resumes work. The loop uses a separate child session so the main CLI remains responsive; no standalone pi executable or new agent framework is required.
+Godot is the first supported engine; a general multi-engine adapter layer can wait until a concrete need justifies it.
 
-New projects start with a blank Godot Node scene, protocol guidance and generic helpers. No genre game is copied, and playback never falls back to an installed sample. An explicit user-supplied Godot project remains supported. Regression game fixtures are excluded from the npm package and product evaluation.
+- **Open source:** Godot's [MIT license](https://godotengine.org/license/) fits OpenFun's MIT direction and permits customization and redistribution with the required notices. [Unity](https://unity.com/legal/editor-terms-of-service/software) and [Unreal](https://www.unrealengine.com/eula/unreal) use their own engine licensing terms rather than MIT.
+- **Simple composition:** Godot's [nodes, scenes, and resources](https://godotengine.org/features/) give generated projects a relatively compact, composable structure. We expect this to make inspection, extension, and recovery from malformed generated assets easier; that is an engineering hypothesis to validate.
+- **Integration potential:** A relatively small distribution and modular source make bundling, custom builds, and deeper integration worth exploring. The current CLI launches a separately installed Godot process; it does not embed the engine.
+- **Runtime loading:** Godot supports [loading external files](https://docs.godotengine.org/en/stable/tutorials/io/runtime_file_loading_and_saving.html) and [resource packs](https://docs.godotengine.org/en/stable/tutorials/export/exporting_pcks.html) at runtime. OpenFun must still prepare platform-compatible resources, activate scene/script changes, and preserve live state; loading a pack alone does not solve hot updates.
+
+Godot gives us a focused path from 2D to 3D. Performance, mobile exports, and large-world scale will be validated at each milestone rather than assumed from engine choice.
+
+## Releases and world instances
+
+The planned publishing unit is an **epoch0 release**: initial content, assets, rules, and generation configuration, excluding private credentials. Playing a release creates a world instance that develops its own later epochs and saves. Sharing an evolved save is a separate operation.
+
+A multiplayer instance shares an authoritative world state and ordered activation of generated updates. Clients consume the same accepted results. This preserves the epoch model while adding synchronization and authority; the prototype is currently local and single-player.
+
+Delivery stages, including the planned cloud platform, are in the [roadmap](roadmap.md#openfun-cloud-and-ugc).

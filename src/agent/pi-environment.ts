@@ -58,7 +58,9 @@ export function preparePiPackage(): string {
       process.platform === "win32" ? "junction" : "dir",
     );
   }
-  copyFileSync(join(projectRoot, "README.md"), join(target, "README.md"));
+  for (const name of ["README.md", "README.zh-CN.md"]) {
+    copyFileSync(join(projectRoot, name), join(target, name));
+  }
   // Keep the engine's real VERSION for its protocol/internal logic. Its release
   // notes are not OpenFun release notes; /about exposes both product identities.
   writeFileSync(
