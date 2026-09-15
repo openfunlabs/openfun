@@ -90,9 +90,7 @@ For optional continued refinement, use `/polish [focus]`. Inspect with `/polish 
 
 The design centers on **content, assets, and a game engine**. The goal is to make the same creative capabilities available during authoring and play.
 
-![OpenFun architecture](docs/diagrams/architecture.svg)
-
-[Editable Excalidraw diagram](docs/diagrams/architecture.excalidraw)
+![OpenFun architecture](docs/diagrams/architecture.png)
 
 | Part            | Responsibility                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------- |
@@ -102,11 +100,11 @@ The design centers on **content, assets, and a game engine**. The goal is to mak
 
 ### Initial world and ongoing generation
 
-The creator defines the content, assets, and rules at **t0 / epoch0**, including constraints for future development. This can be an entire playable world.
+The creator defines the content, assets, and rules of **epoch0**, including constraints for future development. This can be an entire playable world.
 
 During play, player actions and world state inform later updates: generate content and assets, prepare and validate them, activate them at a suitable point, then persist the results. These updates form later epochs; they can happen independently and reuse unchanged content. The engine keeps running between updates.
 
-Maps can use tiles, chunks, graphs, or other representations appropriate to the game. New mechanics require compatible code and state changes as well as assets. Prepared content is distinct from what a player has encountered; revisits and restored saves reuse accepted results.
+Games can organize maps in different ways, such as separate platforming levels or connected regions in an open world. When adding a new mechanic, existing gameplay and saves should keep working. OpenFun keeps track of content prepared for later and what the player has already experienced. Returning to an area or loading a save preserves the existing world and the player's progress.
 
 Publishing is designed around an epoch0 release. Each playthrough creates an evolving world instance with its own later content and saves. A multiplayer instance shares accepted updates and an authoritative world state.
 
@@ -114,17 +112,17 @@ Publishing is designed around an epoch0 release. Each playthrough creates an evo
 
 The **current agent is built on pi, and the current game runtime uses Godot**. Godot's [MIT license](https://godotengine.org/license/), compact node/scene structure, and [runtime resource loading](https://docs.godotengine.org/en/stable/tutorials/export/exporting_pcks.html) make it a practical starting point. Future versions may migrate to or support other engines as the project develops.
 
-Text/code models produce content, logic, and generation instructions. New media assets come from image, video, audio, and 3D generation models; suitable existing assets can also be reused. Code handles logic, layout, collision, and integration.
+Text models produce content, logic, and generation instructions. New media assets come from image, video, audio, and 3D generation models; suitable existing assets can also be reused. Code handles logic, layout, collision, and integration.
 
 The design supports configuring providers by capability, including local and cloud models. No particular text or media model defines OpenFun. Generation can work ahead of play to balance latency, quality, and cost.
 
 ## Roadmap
 
-| Stage                | Target experience                                                                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **2D games**         | Terraria-like worlds that generate new regions, monsters, items, assets, and stories during play, with tested mechanic updates and persistent player consequences |
-| **Basic 3D games**   | Minecraft-like worlds with new map chunks, monsters, and items, supported by streaming, spatial interaction, and a 3D asset pipeline                              |
-| **Rich open worlds** | Long-term ambition toward the scale, systemic depth, and presentation of games such as Fallout and GTA                                                            |
+| Stage                             | Target experience                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **2D games**                      | Games in the style of Terraria and Stardew Valley that generate new regions, monsters, items, assets, and stories during play        |
+| **Basic 3D games**                | Minecraft-like worlds with new map chunks, monsters, and items, supported by streaming, spatial interaction, and a 3D asset pipeline |
+| **High-quality open-world games** | Long-term ambition toward the scale, systemic depth, and presentation of games such as Fallout and GTA                               |
 
 Expand toward roguelites, platformers, card games, and other genres as the foundation matures. Each stage should demonstrate enjoyable play, consistent world state, reliable recovery, and manageable generation costs.
 
