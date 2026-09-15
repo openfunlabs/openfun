@@ -6,7 +6,6 @@ import {
   realpathSync,
   rmSync,
   writeFileSync,
-  copyFileSync,
   cpSync,
   renameSync,
 } from "node:fs";
@@ -59,7 +58,12 @@ export function preparePiPackage(): string {
     );
   }
   for (const name of ["README.md", "README.zh-CN.md"]) {
-    copyFileSync(join(projectRoot, name), join(target, name));
+    // Keep repository links branch-relative in source. Runtime docs belong to pi.
+    const readme = readFileSync(join(projectRoot, name), "utf8").replace(
+      /\]\((docs\/[^)]+|CONTRIBUTING\.md|LICENSE|THIRD_PARTY_NOTICES\.md)\)/g,
+      "](https://github.com/openfunlabs/openfun/blob/main/$1)",
+    );
+    writeFileSync(join(target, name), readme);
   }
   // Keep the engine's real VERSION for its protocol/internal logic. Its release
   // notes are not OpenFun release notes; /about exposes both product identities.

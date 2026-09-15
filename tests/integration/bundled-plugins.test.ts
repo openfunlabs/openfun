@@ -90,6 +90,22 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
     { name: "OpenFun", configDir: ".openfun" },
   );
   assert.equal(readFileSync(join(legacy, "settings.json"), "utf8"), original);
+  for (const name of ["README.md", "README.zh-CN.md"]) {
+    const readme = readFileSync(join(env.PI_PACKAGE_DIR!, name), "utf8");
+    assert.ok(
+      readme.includes(
+        "](https://github.com/openfunlabs/openfun/blob/main/docs/roadmap.md)",
+      ),
+    );
+    assert.ok(
+      readme.includes(
+        "](https://github.com/openfunlabs/openfun/blob/main/LICENSE)",
+      ),
+    );
+    const other = name === "README.md" ? "README.zh-CN.md" : "README.md";
+    assert.ok(readme.includes(`](${other})`));
+    assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, other)));
+  }
 });
 
 test("bundled plugins resolve local dependencies, support disabling, and defer to existing native installations", (t) => {

@@ -6,7 +6,7 @@
 
 Describe the game you want to make, shape its initial world and rules, and let later play develop new places, characters, items, stories, and eventually mechanics. OpenFun is designed for people who have never used a game engine, while keeping the generated Godot project accessible to experienced developers.
 
-This repository is an early feasibility prototype. The first product milestone focuses on **2D games**; the [roadmap](https://github.com/openfunlabs/openfun/blob/main/docs/roadmap.md) then moves toward basic 3D, richer open worlds, and more game genres.
+This repository is an early feasibility prototype. The first product milestone focuses on **2D games**; the [roadmap](docs/roadmap.md) then moves toward basic 3D, richer open worlds, and more game genres.
 
 ## How it works
 
@@ -14,7 +14,7 @@ This repository is an early feasibility prototype. The first product milestone f
 - **Keep creating during play.** OpenFun uses player actions and world state to generate subsequent content and assets. Updates are discrete; the game keeps running between them.
 - **Run with Godot.** Godot handles input, game logic, physics, and rendering. OpenFun manages creation, generation, and persistence around it.
 
-The target is to make the same creative capabilities available during authoring and play. See the concise [architecture](https://github.com/openfunlabs/openfun/blob/main/docs/architecture.md), including why we chose Godot.
+The target is to make the same creative capabilities available during authoring and play. See the concise [architecture](docs/architecture.md), including why we chose Godot.
 
 ## What works today
 
@@ -27,7 +27,7 @@ The CLI bundles pi for conversation, model selection, and authoring. The agent e
 | Local projects, persistence, and world package import/export | Separate epoch0 releases and evolving world saves                         |
 | Text model selection through pi                              | Independently configurable media providers and local multimodal inference |
 
-Current image generation uses a specific pi/Codex integration. Providers are intended to be configurable by capability; no particular text or image model defines OpenFun. Current restrictions are documented in [configuration](https://github.com/openfunlabs/openfun/blob/main/docs/configuration.md) and [assets](https://github.com/openfunlabs/openfun/blob/main/docs/assets.md).
+Current image generation uses a specific pi/Codex integration. Providers are intended to be configurable by capability; no particular text or image model defines OpenFun. Current restrictions are documented in [configuration](docs/configuration.md) and [assets](docs/assets.md).
 
 ## Get started
 
@@ -60,15 +60,15 @@ Use `/model` to choose a model and `/login` when needed. OpenFun uses its own pr
 | `/world`                       | Inspect the current project                       |
 | `/new`                         | Start a new conversation in the same world        |
 
-OpenFun opens the current directory. To work on another game, exit, change directories, and run `openfun` again. See [CLI workflows](https://github.com/openfunlabs/openfun/blob/main/docs/implementation.md#cli-workflows) for checks, previews, packaging, and the optional polish loop.
+OpenFun opens the current directory. To work on another game, exit, change directories, and run `openfun` again. See [CLI workflows](docs/implementation.md#cli-workflows) for checks, previews, packaging, and the optional polish loop.
 
 ## Documentation
 
-- [Architecture](https://github.com/openfunlabs/openfun/blob/main/docs/architecture.md) · [Roadmap](https://github.com/openfunlabs/openfun/blob/main/docs/roadmap.md)
-- [Current implementation](https://github.com/openfunlabs/openfun/blob/main/docs/implementation.md) · [Configuration](https://github.com/openfunlabs/openfun/blob/main/docs/configuration.md) · [Assets](https://github.com/openfunlabs/openfun/blob/main/docs/assets.md)
-- [Runtime protocol](https://github.com/openfunlabs/openfun/blob/main/docs/runtime-protocol.md) · [World format](https://github.com/openfunlabs/openfun/blob/main/docs/world-format.md)
-- [Contributing and tests](https://github.com/openfunlabs/openfun/blob/main/CONTRIBUTING.md) · [Game quality evaluation](https://github.com/openfunlabs/openfun/blob/main/docs/evaluation.md)
+- [Architecture](docs/architecture.md) · [Roadmap](docs/roadmap.md)
+- [Current implementation](docs/implementation.md) · [Configuration](docs/configuration.md) · [Assets](docs/assets.md)
+- [Runtime protocol](docs/runtime-protocol.md) · [World format](docs/world-format.md)
+- [Contributing and tests](CONTRIBUTING.md) · [Game quality evaluation](docs/evaluation.md)
 
 ## License
 
-OpenFun is [MIT licensed](https://github.com/openfunlabs/openfun/blob/main/LICENSE). Dependencies and external tools retain their own licenses; see [third-party notices](https://github.com/openfunlabs/openfun/blob/main/THIRD_PARTY_NOTICES.md).
+OpenFun is [MIT licensed](LICENSE). Dependencies and external tools retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
