@@ -92,12 +92,21 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
   assert.equal(readFileSync(join(legacy, "settings.json"), "utf8"), original);
   for (const name of ["README.md", "README.zh-CN.md"]) {
     const readme = readFileSync(join(env.PI_PACKAGE_DIR!, name), "utf8");
-    assert.ok(readme.includes("](openfun-diagrams/architecture.png)"));
-    assert.ok(
-      existsSync(
-        join(env.PI_PACKAGE_DIR!, "openfun-diagrams/architecture.png"),
-      ),
-    );
+    for (const diagram of ["architecture", "context", "assets"]) {
+      const path = `openfun-diagrams/${diagram}.png`;
+      assert.ok(readme.includes(`src="${path}"`));
+      assert.ok(readme.includes(`href="${path}"`));
+      assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, path)));
+    }
+    for (const [attribute, file] of [
+      ["src", "openfun-header.svg"],
+      ["srcset", "openfun-header-dark.svg"],
+    ]) {
+      const path = `openfun-diagrams/${file}`;
+      assert.ok(readme.includes(`${attribute}="${path}"`));
+      assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, path)));
+    }
+    assert.ok(!readme.includes("docs/diagrams/"));
     assert.ok(
       readme.includes(
         "](https://github.com/openfunlabs/openfun/blob/main/LICENSE)",

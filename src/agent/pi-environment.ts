@@ -67,7 +67,10 @@ export function preparePiPackage(): string {
   for (const name of ["README.md", "README.zh-CN.md"]) {
     // Keep repository links branch-relative in source. Runtime docs belong to pi.
     const readme = readFileSync(join(projectRoot, name), "utf8")
-      .replaceAll("](docs/diagrams/", "](openfun-diagrams/")
+      .replace(
+        /(\]\(|\b(?:src|srcset|href)=["'])docs\/diagrams\//g,
+        "$1openfun-diagrams/",
+      )
       .replace(
         /\]\((docs\/[^)]+|LICENSE|THIRD_PARTY_NOTICES\.md)\)/g,
         "](https://github.com/openfunlabs/openfun/blob/main/$1)",
