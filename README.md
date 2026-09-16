@@ -1,3 +1,5 @@
+[![OpenFun logo](https://avatars.githubusercontent.com/u/327496980?s=128&v=4)](https://github.com/openfunlabs)
+
 # OpenFun
 
 **English** | [简体中文](README.zh-CN.md)
@@ -88,48 +90,52 @@ For optional continued refinement, use `/polish [focus]`. Inspect with `/polish 
 
 ## Architecture
 
-The design centers on **content, assets, and a game engine**. The goal is to make the same creative capabilities available during authoring and play.
+The **Agent** uses **Context** to create and extend **Assets**, which the **game engine** runs. The goal is to make the same creative capabilities available during authoring and play.
 
 ![OpenFun architecture](docs/diagrams/architecture.png)
 
-| Part            | Responsibility                                                                                 |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| **Content**     | Fixed rules, expandable world entries, and records of what happened during play                |
-| **Assets**      | Images, sprites, tiles, video, music, sound, 3D models, and reusable scenes composed from them |
-| **Game engine** | Input, simulation, game state, physics, rendering, and activation of prepared updates          |
+| Part            | Responsibility                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| **Context**     | Rules, world descriptions, and play history that guide generation                                      |
+| **Agent**       | Use text models and tools to plan, generate media, write scripts, compose scenes, and validate updates |
+| **Assets**      | Media, executable scripts, and reusable scenes that combine them                                       |
+| **Game engine** | Input, simulation, game state, physics, rendering, and activation of prepared updates                  |
 
-### Content: fixed rules and an evolving world
+### Context: fixed rules and an evolving world
 
-Rules belong to Content, with a clear separation between what generation must preserve and what it can expand.
+Context stores the world's textual design, rules, and history, separating what generation must preserve from what it can expand. Executable behavior belongs to Assets.
 
-![Content: fixed core, world entries, and play history provide context for generation](docs/diagrams/content.png)
+![Context: fixed core, world entries, and play history guide the Agent](docs/diagrams/context.png)
 
-| Part              | What it contains                                                                             | How it changes                                                         |
-| ----------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Fixed core**    | Core world principles, foundational rules, and limits on future generation                   | Defined by the creator at epoch0; ongoing generation cannot rewrite it |
-| **World entries** | Places, characters, items, quests, stories, and permitted mechanics with their behavior code | Created at epoch0, then expanded or updated within the fixed rules     |
-| **Play history**  | Events that happened, player choices, and accepted world changes                             | Recorded as play progresses; unplayed drafts are not history           |
+| Part              | What it contains                                                                    | How it changes                                                         |
+| ----------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Fixed core**    | Core world principles, foundational rules, and limits on future generation          | Defined by the creator at epoch0; ongoing generation cannot rewrite it |
+| **World entries** | Descriptions of places, characters, items, quests, stories, and permitted mechanics | Created at epoch0, then expanded or updated within the fixed rules     |
+| **Play history**  | Events that happened, player choices, and accepted world changes                    | Recorded as play progresses; unplayed drafts are not history           |
 
-Inspired by [SillyTavern's World Info](https://docs.sillytavern.app/usage/core-concepts/worldinfo/), generation uses a persistent core plus relevant entries selected for the current situation. OpenFun's design combines the fixed core, relevant world entries and history, and current engine state as context for each generation task.
+Inspired by [SillyTavern's World Info](https://docs.sillytavern.app/usage/core-concepts/worldinfo/), the Agent uses a persistent core plus relevant entries and history selected for the current situation. This saved Context supplies each generation task with the knowledge it needs, alongside current state from the engine.
 
-Gameplay rules are enforced by code and validation as well as described to the model. New mechanics must stay within the fixed core; a creator can deliberately revise that core in a new release. Live state such as health and position remains the responsibility of the engine and saves.
+Gameplay rules are described in Context and enforced by scripts and validation. New mechanics must stay within the fixed core; a creator can deliberately revise that core in a new release. Live state such as health and position remains the responsibility of the engine and saves.
 
-### Assets: media and reusable scenes
+### Assets: media, scripts, and scenes
 
-Assets include both individual media resources and **scenes (Scene)** built by combining them.
+Assets contain the media and executable implementation of the game, including reusable **scenes (Scene)**.
 
-![Assets: media combine into character scenes, map regions, and larger nested scenes](docs/diagrams/assets.png)
+![Assets: media and scripts combine into reusable, nested scenes](docs/diagrams/assets.png)
 
 - **Media:** images, including illustrations, sprites, textures, tiles, and animation frames; video; music and sound effects; and 3D models.
-- **Scenes:** reusable compositions that reference media and other scenes, define their layout and hierarchy, and connect to behavior logic from Content.
+- **Scripts:** executable game mechanics and behaviors, such as movement, combat, interactions, and quest logic.
+- **Scenes:** reusable compositions of nodes, media, scripts, and other scenes, defining how their parts are arranged and work together.
 
-For example, a character's body, outfit, animations, and footsteps can form a character scene. Terrain, trees, buildings, and character scenes can form a map region. Multiple regions can form a larger scene, reusing the same assets along the way. Scenes retain these parts and relationships; they are more than a combined image. Each scene instance has its own runtime state managed by the engine.
+In the current Godot implementation, a [scene is a hierarchy of nodes](https://docs.godotengine.org/en/stable/getting_started/step_by_step/nodes_and_scenes.html). Scripts can attach to nodes and remain in shared external files. Textures, audio, scripts, and saved scenes are [resources](https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html), so **Assets** remains the umbrella term; **Nodes** describes the building blocks within scenes.
+
+For example, a character's body, outfit, animations, footsteps, and movement script can form a character scene. Terrain, trees, buildings, and character scenes can form a map region; multiple regions can form a larger scene. These compositions preserve their parts and relationships for reuse. Each scene instance has its own runtime state managed by the engine.
 
 ### Initial world and ongoing generation
 
-The creator defines the content, assets, and rules of **epoch0**, including constraints for future development. This can be an entire playable world.
+The creator defines the **Context and Assets of epoch0**, including the rules and constraints for future development. This can be an entire playable world.
 
-During play, player actions and world state inform later updates: generate content and assets, prepare and validate them, activate them at a suitable point, then persist the results. These updates form later epochs; they can happen independently and reuse unchanged content. The engine keeps running between updates.
+During play, player actions and world state inform the Agent's next updates. It prepares and validates new Assets, which the engine activates at a suitable point. Accepted world changes and events update Context, and the results are saved. These updates form later epochs; they can happen independently and reuse unchanged material. The engine keeps running between updates.
 
 Games can organize maps in different ways, such as separate platforming levels or connected regions in an open world. When adding a new mechanic, existing gameplay and saves should keep working. OpenFun keeps track of content prepared for later and what the player has already experienced. Returning to an area or loading a save preserves the existing world and the player's progress.
 
@@ -139,7 +145,7 @@ Publishing is designed around an epoch0 release. Each playthrough creates an evo
 
 The **current agent is built on pi, and the current game runtime uses Godot**. Godot's [MIT license](https://godotengine.org/license/), compact node/scene structure, and [runtime resource loading](https://docs.godotengine.org/en/stable/tutorials/export/exporting_pcks.html) make it a practical starting point. Future versions may migrate to or support other engines as the project develops.
 
-Text models produce content, logic, and generation instructions. New media assets come from image, video, audio, and 3D generation models; suitable existing assets can also be reused. Code handles logic, layout, collision, and integration.
+Driven by text models, the Agent reads Context and engine state, calls image, video, audio, and 3D models for new media, and writes gameplay scripts. It uses tools to compose media, scripts, nodes, and existing scenes into playable Assets, validates the result, and prepares it for the engine to load. Suitable existing Assets can be reused throughout this process.
 
 The design supports configuring providers by capability, including local and cloud models. No particular text or media model defines OpenFun. Generation can work ahead of play to balance latency, quality, and cost.
 
@@ -161,7 +167,7 @@ Work toward user-configurable, locally runnable **diffusion models for text, ima
 
 **OpenFun Cloud is the planned UGC platform for creating, publishing, sharing, and playing continuously evolving AI games.**
 
-- Publish, discover, and remix epoch0 releases with their initial content, assets, and rules.
+- Publish, discover, and remix epoch0 releases with their initial Context and Assets.
 - Host persistent worlds and multiplayer sessions with shared generation results.
 - Provide managed inference for hosted games, including cloud multiplayer.
 - Enable mobile creation and play through cloud rendering, with attention to latency, touch controls, bandwidth, and GPU cost.
