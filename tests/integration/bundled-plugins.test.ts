@@ -90,6 +90,33 @@ test("new users have an OpenFun profile; standalone pi profiles and legacy envir
     { name: "OpenFun", configDir: ".openfun" },
   );
   assert.equal(readFileSync(join(legacy, "settings.json"), "utf8"), original);
+  for (const name of ["README.md", "README.zh-CN.md"]) {
+    const readme = readFileSync(join(env.PI_PACKAGE_DIR!, name), "utf8");
+    for (const diagram of ["architecture", "context", "assets"]) {
+      const path = `openfun-diagrams/${diagram}.png`;
+      assert.ok(readme.includes(`src="${path}"`));
+      assert.ok(readme.includes(`href="${path}"`));
+      assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, path)));
+    }
+    for (const [attribute, file] of [
+      ["src", "openfun-header.svg"],
+      ["srcset", "openfun-header-dark.svg"],
+    ]) {
+      const path = `openfun-diagrams/${file}`;
+      assert.ok(readme.includes(`${attribute}="${path}"`));
+      assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, path)));
+    }
+    assert.ok(!readme.includes("docs/diagrams/"));
+    assert.ok(
+      readme.includes(
+        "](https://github.com/openfunlabs/openfun/blob/main/LICENSE)",
+      ),
+    );
+    const other = name === "README.md" ? "README.zh-CN.md" : "README.md";
+    assert.ok(readme.includes("](#roadmap)"));
+    assert.ok(readme.includes(`](${other})`));
+    assert.ok(existsSync(join(env.PI_PACKAGE_DIR!, other)));
+  }
 });
 
 test("bundled plugins resolve local dependencies, support disabling, and defer to existing native installations", (t) => {
