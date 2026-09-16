@@ -1,6 +1,10 @@
 <h1 align="center">
-  <a href="https://github.com/openfunlabs"><img src="https://avatars.githubusercontent.com/u/327496980?s=96&v=4" alt="OpenFun logo" width="48" height="48" align="middle"></a>
-  OpenFun
+  <a href="https://github.com/openfunlabs">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/openfun-header-dark.svg">
+      <img src="docs/diagrams/openfun-header.svg" alt="OpenFun" width="205" height="56">
+    </picture>
+  </a>
 </h1>
 
 [English](README.md) | **简体中文**
