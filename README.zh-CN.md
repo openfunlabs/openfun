@@ -1,6 +1,7 @@
-[![OpenFun logo](https://avatars.githubusercontent.com/u/327496980?s=128&v=4)](https://github.com/openfunlabs)
-
-# OpenFun
+<h1 align="center">
+  <a href="https://github.com/openfunlabs"><img src="https://avatars.githubusercontent.com/u/327496980?s=96&v=4" alt="OpenFun logo" width="48" height="48" align="middle"></a>
+  OpenFun
+</h1>
 
 [English](README.md) | **简体中文**
 
