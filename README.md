@@ -92,11 +92,38 @@ The design centers on **content, assets, and a game engine**. The goal is to mak
 
 ![OpenFun architecture](docs/diagrams/architecture.png)
 
-| Part            | Responsibility                                                                                      |
-| --------------- | --------------------------------------------------------------------------------------------------- |
-| **Content**     | World settings, rules, mechanics, behavior code, characters, items, and narrative                   |
-| **Assets**      | Images, animation, audio, video, 3D resources, and their composition into scenes, maps, and regions |
-| **Game engine** | Input, simulation, game state, physics, rendering, and activation of prepared updates               |
+| Part            | Responsibility                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| **Content**     | Fixed rules, expandable world entries, and records of what happened during play                |
+| **Assets**      | Images, sprites, tiles, video, music, sound, 3D models, and reusable scenes composed from them |
+| **Game engine** | Input, simulation, game state, physics, rendering, and activation of prepared updates          |
+
+### Content: fixed rules and an evolving world
+
+Rules belong to Content, with a clear separation between what generation must preserve and what it can expand.
+
+![Content: fixed core, world entries, and play history provide context for generation](docs/diagrams/content.png)
+
+| Part              | What it contains                                                                             | How it changes                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Fixed core**    | Core world principles, foundational rules, and limits on future generation                   | Defined by the creator at epoch0; ongoing generation cannot rewrite it |
+| **World entries** | Places, characters, items, quests, stories, and permitted mechanics with their behavior code | Created at epoch0, then expanded or updated within the fixed rules     |
+| **Play history**  | Events that happened, player choices, and accepted world changes                             | Recorded as play progresses; unplayed drafts are not history           |
+
+Inspired by [SillyTavern's World Info](https://docs.sillytavern.app/usage/core-concepts/worldinfo/), generation uses a persistent core plus relevant entries selected for the current situation. OpenFun's design combines the fixed core, relevant world entries and history, and current engine state as context for each generation task.
+
+Gameplay rules are enforced by code and validation as well as described to the model. New mechanics must stay within the fixed core; a creator can deliberately revise that core in a new release. Live state such as health and position remains the responsibility of the engine and saves.
+
+### Assets: media and reusable scenes
+
+Assets include both individual media resources and **scenes (Scene)** built by combining them.
+
+![Assets: media combine into character scenes, map regions, and larger nested scenes](docs/diagrams/assets.png)
+
+- **Media:** images, including illustrations, sprites, textures, tiles, and animation frames; video; music and sound effects; and 3D models.
+- **Scenes:** reusable compositions that reference media and other scenes, define their layout and hierarchy, and connect to behavior logic from Content.
+
+For example, a character's body, outfit, animations, and footsteps can form a character scene. Terrain, trees, buildings, and character scenes can form a map region. Multiple regions can form a larger scene, reusing the same assets along the way. Scenes retain these parts and relationships; they are more than a combined image. Each scene instance has its own runtime state managed by the engine.
 
 ### Initial world and ongoing generation
 
