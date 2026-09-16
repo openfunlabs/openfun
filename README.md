@@ -97,7 +97,9 @@ For optional continued refinement, use `/polish [focus]`. Inspect with `/polish 
 
 The **Agent** uses **Context** to create and extend **Assets**, which the **game engine** runs. The goal is to make the same creative capabilities available during authoring and play.
 
-![OpenFun architecture](docs/diagrams/architecture.png)
+<p align="center">
+  <a href="docs/diagrams/architecture.png"><img src="docs/diagrams/architecture.png" alt="OpenFun architecture" width="640"></a>
+</p>
 
 | Part            | Responsibility                                                                                         |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
@@ -110,7 +112,9 @@ The **Agent** uses **Context** to create and extend **Assets**, which the **game
 
 Context stores the world's textual design, rules, and history, separating what generation must preserve from what it can expand. Executable behavior belongs to Assets.
 
-![Context: fixed core, world entries, and play history guide the Agent](docs/diagrams/context.png)
+<p align="center">
+  <a href="docs/diagrams/context.png"><img src="docs/diagrams/context.png" alt="Context: fixed core, world entries, and play history guide the Agent" width="640"></a>
+</p>
 
 | Part              | What it contains                                                                    | How it changes                                                         |
 | ----------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -126,7 +130,9 @@ Gameplay rules are described in Context and enforced by scripts and validation. 
 
 Assets contain the media and executable implementation of the game, including reusable **scenes (Scene)**.
 
-![Assets: media and scripts combine into reusable, nested scenes](docs/diagrams/assets.png)
+<p align="center">
+  <a href="docs/diagrams/assets.png"><img src="docs/diagrams/assets.png" alt="Assets: media and scripts combine into reusable, nested scenes" width="640"></a>
+</p>
 
 - **Media:** images, including illustrations, sprites, textures, tiles, and animation frames; video; music and sound effects; and 3D models.
 - **Scripts:** executable game mechanics and behaviors, such as movement, combat, interactions, and quest logic.

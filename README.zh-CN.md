@@ -97,7 +97,9 @@ openfun play ./shared-arena --trust-project
 
 **Agent** 根据 **Context（上下文）** 创作和扩展 **Assets（资产）**，由**游戏引擎**运行，目标是让创作阶段和游玩阶段具备相同的创作能力。
 
-![OpenFun 架构设计](docs/diagrams/architecture.png)
+<p align="center">
+  <a href="docs/diagrams/architecture.png"><img src="docs/diagrams/architecture.png" alt="OpenFun 架构设计" width="640"></a>
+</p>
 
 | 部分         | 职责                                                               |
 | ------------ | ------------------------------------------------------------------ |
@@ -110,7 +112,9 @@ openfun play ./shared-arena --trust-project
 
 Context 保存世界的文字设计、规则与历史，区分哪些必须保持不变，哪些可以持续扩展。可执行的行为实现属于 Assets。
 
-![Context：固定核心、世界条目与游玩记录，指导 Agent 生成](docs/diagrams/context.png)
+<p align="center">
+  <a href="docs/diagrams/context.png"><img src="docs/diagrams/context.png" alt="Context：固定核心、世界条目与游玩记录，指导 Agent 生成" width="640"></a>
+</p>
 
 | 部分         | 包含什么                                                 | 如何变化                                           |
 | ------------ | -------------------------------------------------------- | -------------------------------------------------- |
@@ -126,7 +130,9 @@ Context 描述游戏规则，脚本与校验负责落实。新机制必须遵守
 
 Assets 包含游戏的媒体素材与可执行实现，以及可复用的**场景（Scene）**。
 
-![Assets：媒体素材与脚本组合成可复用、可嵌套的场景](docs/diagrams/assets.png)
+<p align="center">
+  <a href="docs/diagrams/assets.png"><img src="docs/diagrams/assets.png" alt="Assets：媒体素材与脚本组合成可复用、可嵌套的场景" width="640"></a>
+</p>
 
 - **媒体素材：** 图片，包括插画、精灵、贴图、瓦片和动画帧；视频；音乐与音效；以及 3D 模型。
 - **脚本：** 可执行的游戏机制与行为，例如移动、战斗、交互和任务逻辑。
