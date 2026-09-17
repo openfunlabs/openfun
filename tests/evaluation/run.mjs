@@ -79,7 +79,7 @@ for (const part of ["dist", "tools", "docs"])
 const registration = {
   runId,
   world,
-  specification: "evaluation-v1.1",
+  specification: "evaluation-v1.2",
   purpose: values.purpose,
   case: values.case,
   prompt,

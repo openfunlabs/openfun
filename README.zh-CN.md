@@ -200,7 +200,7 @@ pnpm format:check
 
 `check` 包含类型检查、单元与集成测试和构建，不调用模型。引擎验收与真实模型测试单独运行，模型测试会消耗额度。
 
-个人世界放在仓库之外，测试输出放在 `.output/`，公开说明同步更新中英文 README。运行时协议和游戏设计指南保留为 Agent 使用的内部资源；[世界格式](docs/world-format.md) 和 [评测规范](docs/evaluation.md) 供开发参考。
+个人世界放在仓库之外，测试输出放在 `.output/`，公开说明同步更新中英文 README。运行时协议和游戏设计指南保留为 Agent 使用的内部资源；[世界格式](docs/world-format.md)、[评测规范](docs/evaluation.md) 和 [质量提升实施方案](docs/quality-improvement.md) 供开发参考。
 
 </details>
 
