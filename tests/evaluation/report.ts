@@ -23,7 +23,7 @@ const dimensionIds = [
 
 /** A review record is a human/assisted judgment, never an automated quality certificate. */
 export const evaluationReport = z.strictObject({
-  specification: z.literal("evaluation-v1.2"),
+  specification: z.literal("evaluation-v1.3"),
   runId: text,
   case: text,
   phase: z.enum(["first-delivery", "polish", "continuation"]),

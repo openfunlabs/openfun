@@ -1,214 +1,224 @@
-# OpenFun product evaluation
+# OpenFun 产品评测规范
 
-Specification: `evaluation-v1.2`. This version adds evidence tied to project versions, layered checks, negative controls and regression requirements. Scoring anchors are unchanged and still need empirical calibration. Keep v1.0/v1.1 results under their original versions; changes to cases, anchors or eligibility require a new version. The [quality improvement plan](quality-improvement.md) defines the full scope and unified acceptance for a single delivery.
+规范版本：`evaluation-v1.3`。本版聚焦 2D，以 A、C、D、E 为核心案例，暂缓 3D 案例 B；D/E 的需求明确为 2D。评分标准与通过门槛不变，仍需通过实际评测校准。v1.0–v1.2 的结果保留原版本，不重新套用本版评分。案例、评分标准或适用范围发生变化时，须升级规范版本。[质量提升实施方案](quality-improvement.md)定义本次 2D 改造范围和统一验收要求。
 
-## Purpose and scope
+## 目的与范围
 
-Evaluate whether an ordinary user receives a coherent, attractive, enjoyable game with meaningful AI continuation. Tool use is necessary evidence of workflow, never sufficient evidence of quality. Fun takes precedence over content volume. Enemy, weapon, level, asset and word counts are not quality targets.
+评测普通用户能否得到画面协调、有吸引力、好玩，并且能通过 AI 续写持续发展的游戏。工具调用记录只能证明执行过哪些操作。质量要看实际游戏表现，不能用敌人、武器、关卡、素材或文字数量代替。
 
-Evaluate the installed `openfun` entry, bundled agent, actual tools, actual Godot game and live Host. Start in a new empty project. Default initialization contains only a blank Godot entry and integration guidance, not a demonstration game. Source-only integration fixtures are excluded from product trials and the published package. Existing unit/e2e tests remain engineering checks, not product scores. In particular the legacy `tests/live/creation.mjs` explicitly disables image generation and is NOT a full product evaluation.
+通过已安装的 `openfun` 入口，使用随包提供的 Agent、真实工具、Godot 游戏和运行中的 Host，从空项目开始评测。默认初始化仅包含空白 Godot 入口和接入说明。源码中的测试样例不得混入产品评测或发布包。单元测试和 e2e 测试只验证工程行为。旧的 `tests/live/creation.mjs` 明确关闭了图像生成，不能作为完整产品评测。
 
-Current runtime generates schema-bound data using implemented behavior and pre-imported assets. Do not score it as a live code/model-generation engine. Score whether the creator builds sufficient expressive capacity and wires meaningful continuation. Future capability expansions require separately versioned targets. Sharing has a portability gate; multiplayer is out of scope.
+当前运行时生成的是受 schema 约束的数据，使用已实现的行为和已导入的资产。评测应检查创作过程是否准备了足够的行为与资产，让后续内容有意义；不按实时生成代码或模型的能力评分。以后扩展这些能力时，另行定义评测目标和版本。分享功能须通过可移植性检查，多人联机不在本次范围内。
 
-## Run registration and isolation
+## 评测登记与隔离
 
-Before each run record run ID, case/version, exact user prompt, product version and source/package digest, provider/model ID, thinking level, tool versions, OS/hardware/display resolution, service availability, credential-presence booleans, cache condition and run purpose (calibration/baseline/candidate/holdout/polish). Never record secrets or auth payloads. Provider aliases and stochastic services limit reproducibility even with unchanged local configuration.
+每次运行前记录：运行 ID、案例与规范版本、完整用户需求、产品版本及源码或安装包摘要、provider/model ID、thinking level、工具版本、系统与硬件、显示分辨率、服务可用性、凭据是否存在、缓存情况，以及运行用途（calibration/baseline/candidate/holdout/polish）。凭据只记录有无，不能记录密钥或认证内容。即使本地配置不变，provider 别名和服务的随机性也会限制复现程度。
 
-Use only OpenFun-owned authentication. Do not alter the user's games. Create author worlds in a fresh temporary directory outside the development repository; otherwise ancestor Git/source discovery contaminates installed-product evaluation. Keep the world path in registration and copy evidence to the artifact directory. Keep private logs and game artifacts under `.output/evaluations/<run-id>/`. The author sees the ordinary user prompt and normal product instructions; never inject the rubric, expected tool sequence, test solutions or baseline game. The evaluator may inspect the rubric. Record all interventions and retries. Do not manually repair a trial game and call it autonomous success.
+只使用 OpenFun 自己管理的认证，不改动用户的游戏。在开发仓库之外新建临时目录作为创作项目，避免 Agent 发现上级 Git 仓库或源码，影响安装版评测。登记项目路径，并将证据复制到 `.output/evaluations/<run-id>/`。创作 Agent 只能看到普通用户需求和正常产品指令，不能看到评分表、预期工具顺序、测试答案或基准游戏。评审者可以查看本规范。记录所有人工干预和重试；人工修好的游戏不能算自主生成成功。
 
-Separate cold-project trials (no project assets or session history) from reuse trials (explicitly supplied approved project assets). Record global/tool caches rather than claiming they are empty. Never delete credentials or user caches to create a cold run. Compare like conditions. Preserve failed runs, not just successful samples.
+空项目评测与资源复用评测分开：前者没有项目素材或会话历史，后者明确提供已批准的项目素材。如实记录全局和工具缓存，不为制造“冷启动”删除用户缓存或凭据。在相同条件下比较，保留失败样本。
 
-No default product-polish round/call cap is introduced. Evaluation interruption is explicit: user stop, service blocker, stalled process or declared observation window. An interrupted creation is `incomplete`, not a completed failure or an excluded run. Record elapsed time and useful progress. Watchdogs protect resources; their thresholds must be declared and cannot be used to silently discard slow samples.
+不为产品 polish 设置默认轮数或调用次数上限。中断须说明原因：用户停止、服务阻塞、进程停滞或预先声明的观察窗口结束。中断的创作记为 `incomplete`，保留在结果中，不算已完成的失败，也不能剔除。记录耗时和已有进展。若使用超时监控，须预先声明阈值，不能借此静默排除较慢的样本。
 
-## Cases
+## 评测案例
 
-Use the following exact prompts for calibration/development. The direct-delivery preference avoids fabricated questionnaire answers. A genuine blocking question is recorded and answered by the user; do not secretly supplement the brief.
+校准和开发评测使用下列原始需求，不额外补充评分提示。需求中已明确直接交付，评审者不能编造问卷答案。确需用户回答的阻塞问题应如实记录，由用户回答。
 
-| ID  | Ordinary prompt                                                                                                                                    | Required coverage                                                                           | Applicability                                                      |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| A   | 做一个 2D 俯视角动作探索游戏：我提着灯探索逐渐苏醒的森林遗迹，希望战斗有手感，越往深处走越有意思。直接做出完整第一版，细节你决定。                 | Contact/reaction/death, movement, situational decisions, live next-area generation, revisit | All dimensions; narrative evaluated at the scope the game promises |
-| B   | 做一个 3D 海岛探索游戏，我是夜间送信的邮差，逐渐发现一位失踪守塔人的故事。海岛要有吸引力，航行到远处还能发现新的地方。直接做好第一版，细节你决定。 | Principal 3D art, spatial exploration, clues/consequences, live new areas                   | All; combat is not required                                        |
-| C   | 做一个 2D 光线解谜游戏，规则容易理解，但后面的谜题能让我重新思考前面学会的东西。直接做出第一版，不要战斗。                                         | Rule composition, readable outcomes, escalating understanding without arbitrary extra rules | Combat N/A; narrative may be N/A before authoring                  |
-| D   | 做一个小镇调查游戏，我通过对话、线索和选择，发现居民之间隐瞒的往事，希望之后还能发生新的事件。直接做出第一版。                                     | Character motivation, usable clues, choices, continuity and payoff                          | Combat N/A; motion graded for actual interaction needs             |
-| E   | 做一个温暖的海边小店经营游戏，收集材料、制作商品、认识客人，希望经营越久越有新的取舍，而不是只等数字变大。直接做出第一版。                         | Resource tradeoffs, progression, meaningful customers/events, saves                         | Combat N/A                                                         |
+| ID  | 普通用户需求                                                                                                                                       | 必测内容                                                 | 适用范围                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------- |
+| A   | 做一个 2D 俯视角动作探索游戏：我提着灯探索逐渐苏醒的森林遗迹，希望战斗有手感，越往深处走越有意思。直接做出完整第一版，细节你决定。                 | 接触、受击、死亡、移动、情境选择、实时生成后续区域、重访 | 全部维度；叙事按游戏实际承诺的范围评估 |
+| B   | 做一个 3D 海岛探索游戏，我是夜间送信的邮差，逐渐发现一位失踪守塔人的故事。海岛要有吸引力，航行到远处还能发现新的地方。直接做好第一版，细节你决定。 | 历史案例，保留原需求                                     | 暂缓，不纳入 v1.3 校准或验收           |
+| C   | 做一个 2D 光线解谜游戏，规则容易理解，但后面的谜题能让我重新思考前面学会的东西。直接做出第一版，不要战斗。                                         | 规则组合、清晰反馈、逐步加深理解，避免随意添加规则       | 战斗不适用；叙事是否适用可在创作前确定 |
+| D   | 做一个 2D 小镇调查游戏，我通过对话、线索和选择，发现居民之间隐瞒的往事，希望之后还能发生新的事件。直接做出第一版。                                 | 人物动机、可用线索、选择、连续性和结果                   | 战斗不适用；动作按实际交互需要评估     |
+| E   | 做一个温暖的 2D 海边小店经营游戏，收集材料、制作商品、认识客人，希望经营越久越有新的取舍，而不是只等数字变大。直接做出第一版。                     | 资源取舍、成长、有意义的顾客与事件、存档                 | 战斗不适用                             |
 
-Calibrate with A and B first. Then add C–E and independently worded variants. Freeze fresh holdout prompts before candidate results are known; keep them out of author prompts and product guidance. Rotate holdouts after exposure. Add explicit finite/offline and approved-asset-reuse cases to test respect for user exceptions. Lack-of-credentials, HTTP errors, slow generation and invalid-content tests are separately labelled fault trials, not ordinary quality baselines.
+先用 A/C 校准，再加入 D/E 和独立措辞的 2D 需求。案例 B 仅保留为历史记录，已有 3D 能力不属于本次改造范围。
 
-## Three result layers
+在看到候选版本结果之前，先固定未暴露的测试需求（holdout），不将其写入创作提示或产品指南。需求一旦暴露，后续更换。另加明确要求有限内容、离线使用、复用已批准资产的案例，检查是否尊重用户例外。缺少凭据、HTTP 错误、生成缓慢、内容无效等单独作为故障测试，不混入普通质量基线。
 
-### Gates
+## 结果的三个部分
 
-Each gate is `pass`, `fail`, `unverified` or `not_applicable` with evidence and reason. A gate failure prevents overall acceptance; no score can compensate. External outages retain the observed failure and an external attribution; run completion/quality must not be fabricated.
+### 必过门槛
 
-| Gate                               | Required evidence                                                                                                                                                                     |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G1 Playable delivery               | Launch and exercise core interaction, progression and failure/retry; no blocking crash or softlock                                                                                    |
-| G2 Honest claims                   | Compare reported tool/generation/test success to actual results; fixture data never described as model output                                                                         |
-| G3 Production asset sourcing       | Principal visible artwork sourced/reused/generated and integrated; no script-drawn or primitive-assembled substitute artwork without an explicit user exception                       |
-| G4 Actual continuation             | For open-ended cases, real provider job becomes visible, playable subsequent content without evaluator intervention; author is idle/closed while Host continues                       |
-| G5 Persistence                     | Restart/revisit preserves generated identities and material player consequences; no unnecessary regeneration or erased progress                                                       |
-| G6 Project/configuration isolation | Correct working directory, OpenFun-owned configuration; no dependency on standalone pi or changes to other user projects                                                              |
-| G7 Portable sourced assets         | Local asset references resolve, source/licenses retained; package and import into a fresh test directory can load the game; online continuation credentials are configured separately |
+每项记录 `pass`、`fail`、`unverified` 或 `not_applicable`，附证据和原因。任一适用门槛失败，整体不能通过，其他高分不能抵消。外部服务故障须保留失败结果并注明归因，不能据此虚构完成状态或质量。
 
-A local source-pattern match alone cannot fail G3: collision, text/layout, supporting effects and greyboxes during development are legitimate. Trace final visible assets. Existing approved assets do not require repeat generation. For new games the required image target and a dedicated text-free UI skin must also be generated/viewed and applied. Verify actual HUD/menu texture use, live text, button states and source receipts; a concept image or downloaded generic skin alone does not meet the new-game UI requirement. Assess music selection separately from sound effects, including licensed source, loop seam, state transitions and mute. Document intentional silence and user exceptions. A failed service does not authorize quietly hand-coding replacement production art; label art incomplete.
+| 门槛              | 必需证据                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| G1 可玩交付       | 启动并操作核心交互、推进流程、失败和重试；没有阻断性崩溃或卡死                                                      |
+| G2 如实报告       | 工具、生成和测试的成功声明与真实结果一致；测试样例不能被称为模型输出                                                |
+| G3 成品资产来源   | 主要可见美术经过获取、复用或生成，并实际接入游戏；未经用户明确许可，不得用脚本绘制或基础几何体拼装替代成品美术      |
+| G4 真实续写       | 开放式案例中，真实 provider 任务生成玩家可见、可玩的后续内容，无需评审者介入；创作 Agent 空闲或关闭时 Host 仍能继续 |
+| G5 持久化         | 重启和重访后，生成内容的身份及重要玩家后果保留；不做多余的重新生成，不丢失进度                                      |
+| G6 项目与配置隔离 | 工作目录正确，使用 OpenFun 自己的配置；不依赖独立 pi 配置，不修改其他用户项目                                       |
+| G7 资产可移植     | 本地资产引用可解析，来源和许可证保留；打包后导入全新测试目录仍能加载游戏；在线续写凭据另行配置                      |
 
-### Quality anchors
+源码中的绘图模式命中不能单独判定 G3 失败：碰撞体、文字排版、辅助特效和开发期灰盒都可能合理。须追踪最终画面实际使用的资产。已有批准资产无需重复生成。新游戏仍须生成、查看并应用视觉目标，以及专用的无文字 UI 皮肤。检查 HUD/菜单实际使用的纹理、运行时文字、按钮状态和来源记录；只有概念图或下载的通用皮肤不能满足新游戏 UI 要求。
 
-Use integers 0–4, plus `NV` (not verified) and justified `N/A`. Common meaning: 0 absent/unusable; 1 superficial with major failure; 2 functional but materially weak; 3 good within observed scope; 4 consistently strong across multiple tested situations. Evidence gaps are NV, not zero or assumed success. Register N/A before running where possible; author omission is not inapplicability.
+音乐与音效分开检查，包括授权来源、循环接缝、状态切换和静音。记录有意保持安静的设计和用户例外。服务失败时，美术应标记未完成，不能擅自改用手写代码绘制成品美术。
 
-| Dimension                              | 1: superficial                                                | 2: functional/weak                                                          | 3: good                                                                                                              | 4: strong across observations                                                                                           |
-| -------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Q1 Understanding and autonomy          | Ignores central request or waits for tool-by-tool direction   | Delivers only a narrow demo or needs material prompting                     | Coherent first version from ordinary prompt, reasonable decisions, respects constraints                              | Anticipates relevant interaction/content needs and resolves observed problems without scope drift                       |
-| Q2 Asset sourcing and integration      | Token tool call or unused concept; coded substitutes dominate | Real assets present but mismatched, incomplete or only in menus             | Appropriate search/reuse and gap generation, principal assets visible with provenance                                | Cohesive kit adapted effectively to camera, motion, UI and later content; avoids wasteful regeneration                  |
-| Q3 Visual expression                   | Placeholder composition, unreadable or incoherent art         | Attractive isolated parts, weak in-game composition/material consistency    | Clear focal hierarchy, silhouettes, palette, materials and lighting in real gameplay                                 | Distinctive identity remains coherent across locations, interactions and resolutions                                    |
-| Q4 Controls, motion and feedback       | Static attack ring/instant disappearance or unclear response  | Actions work but contact, transitions or cues feel weak                     | Responsive input, readable anticipation/action/recovery, consequences and intentional death/cleanup where applicable | Consistent timing and body/weapon/environment feedback across movement, action and interruption                         |
-| Q5 Core decisions and appeal           | Repetitive action with no meaningful response/choice          | Some choices but one obvious tactic dominates most observed situations      | Choices or skills have situational value and readable consequences; player can learn                                 | Multiple coherent approaches/expressions produce satisfying, understandable tradeoffs across sampled play               |
-| Q6 Development and richness            | Renaming, palette/stat/count changes dominate continuation    | Real novelty exists but soon repeats or distracts from core appeal          | Later content develops existing decisions/relationships, with practice and recovery                                  | Sustained coherent development and payoff without endless systems, grind or arbitrary invalidation of earned strategies |
-| Q7 Narrative/character/world coherence | Contradictions, generic exposition, choices ignored           | Some coherent setup but weak motivations or payoff                          | Usable clues/motivations and persistent consequences appropriate to game's promise                                   | Relationships and discoveries meaningfully develop, branch and resolve across observed events                           |
-| Q8 Live generation experience          | Fake/manual continuation, broken activation or lost state     | Real generation works but abrupt waits, fragile continuity or poor recovery | Proactive prefetch, understandable waiting/retry, validation and reliable restart/revisit                            | Smooth observed transitions and robust fault handling with meaningful context-driven continuation                       |
-| Q9 UI and comprehension                | Player cannot understand goals, controls or state             | Usable with explanation, awkward focus/text/layout                          | First-time player understands and acts; readable controls, focus and feedback                                        | World-specific UI stays clear across long text, input states, resolutions and failures                                  |
-| Q10 Performance and verification       | Blocking errors/jank; only claims or parse checks             | Basic testing, visible stalls or unresolved material issues                 | Author exercises changes, fixes findings; representative play and activation meet declared performance target        | Repeated representative checks show stable pacing/reliability and validated fixes without regression                    |
+### 质量评分
 
-Do not require combat, a story, new weapons or elaborate decoration in every genre. Sound presence, synchronization and mix support Q3/Q4/Q9 as applicable; do not double-count the same failure. Score 0 when the dimension is required but missing or unusable. Each score needs a positive observation, limitation, evidence locator and confidence (low/medium/high). Q5 human enjoyment is not established by model judgement: label model/playback judgement `proxy` and retain human feedback separately.
+使用整数 0–4，并允许 `NV`（未验证）和有理由的 `N/A`（不适用）。0 表示缺失或不可用；1 表示表面实现且有明显问题；2 表示能用但存在实质不足；3 表示在已观察范围内表现良好；4 表示在多种已测试情境中持续表现良好。缺证据记 NV，不能记零或默认成功。尽量在运行前登记 N/A；创作 Agent 漏做某项不构成“不适用”。
 
-Do not average ordinal scores into a pass/fail total. Show the profile, weakest applicable dimension, gate outcomes and repeated-run distribution. Acceptance initially requires every applicable dimension >=3 with evidence and all gates passed. NV cannot pass. Mark human-fun validation pending until human playtest exists; no arbitrary numerical weighting can erase that distinction.
+| 维度                      | 1：表面实现                                      | 2：能用但薄弱                                | 3：表现良好                                                             | 4：多种情境下表现良好                                            |
+| ------------------------- | ------------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Q1 理解与自主完成         | 忽略核心需求，或等待逐条工具指令                 | 仅交付狭窄演示，或需要大量追加提示           | 根据普通需求自主完成协调的首版，决策合理，遵守约束                      | 预见相关交互和内容需要，自主修复观察到的问题，不偏离范围         |
+| Q2 资产获取与接入         | 象征性调用工具、概念图未使用，或大量代码占位美术 | 有真实资产，但不匹配、不完整或只在菜单中出现 | 合理搜索、复用和补充生成；主要资产可见且有来源                          | 资产在镜头、动作、UI 和后续内容中协调，避免浪费性重复生成        |
+| Q3 视觉表现               | 构图像占位物，难以辨认或风格混乱                 | 局部好看，游戏内构图或材质一致性薄弱         | 实际游玩中视觉主次、剪影、色彩、材质和光照清晰                          | 不同地点、交互和分辨率下保持鲜明且统一的风格                     |
+| Q4 操作、动作与反馈       | 只有静态攻击圈、瞬间消失，或结果不清楚           | 动作能用，但接触、过渡或提示薄弱             | 输入及时，准备、行动、恢复和后果清楚；适用时有完整死亡与清理表现        | 移动、行动和打断时，身体、武器、环境反馈与时序一致               |
+| Q5 核心决策与吸引力       | 重复操作，没有有意义的回应或选择                 | 有选择，但多数情境下明显只有一种优势策略     | 选择或技巧在不同情境中有价值，后果清晰，玩家能学习                      | 多种合理做法在实际游玩中形成令人满意、能理解的取舍               |
+| Q6 内容发展与丰富度       | 续写主要是改名、换色、调数值或加数量             | 有新意，但很快重复或偏离核心乐趣             | 后续内容发展已有决策或关系，提供练习和恢复机会                          | 持续推进并兑现前期铺垫，不靠无限加系统、刷数值或随意废除已有策略 |
+| Q7 叙事、角色与世界一致性 | 自相矛盾、泛泛解释、选择被忽略                   | 基本连贯，但动机或后续结果薄弱               | 线索和动机可用，后果持久，符合游戏承诺                                  | 关系和发现随事件发展、分支并得到解决                             |
+| Q8 实时生成体验           | 续写伪造或需人工操作，激活失败或状态丢失         | 真实生成可用，但等待突兀、连续性差或恢复困难 | 提前预取，等待与重试清楚，有验证，重启和重访可靠                        | 已观察到的切换顺畅，故障恢复可靠，续写回应上下文                 |
+| Q9 UI 与理解              | 玩家不明白目标、操作或状态                       | 经解释后能用，但焦点、文字或布局别扭         | 新玩家能理解并操作，控件、焦点和反馈清楚                                | 符合世界风格的 UI 在长文本、输入状态、不同分辨率和故障时仍清晰   |
+| Q10 性能与验证            | 阻断错误、卡顿，仅有声明或解析检查               | 做过基础测试，但仍有明显停顿或未解决的问题   | 创作 Agent 实际操作修改并修复问题；代表性游玩和内容激活符合预设性能目标 | 重复检查显示节奏和可靠性稳定，修复经验证且无回退                 |
 
-### Efficiency and reliability record
+不要要求所有类型都有战斗、故事、新武器或复杂装饰。声音、同步和混音按适用范围支持 Q3/Q4/Q9，同一问题不重复扣算。某维度适用但缺失或不可用时记 0。每个分数要有支持该分数的观察、局限、证据位置和置信度（low/medium/high）。Q5 的真人趣味不能由模型判断代替：模型或回放判断标为 `proxy`，真人反馈单列。
 
-Record time to first playable, author-declared completion, model/API requests, actual reported tokens/credits, repeated submissions, cache/reuse and human interventions. Unknown costs remain unknown; subscriptions are not converted to invented per-call dollar prices. Quality comes first; efficiency diagnoses waste, not a reason to skip useful authorized art generation. Track failure frequency separately from the completed-game quality profile.
+不对这些等级分数求平均后决定通过与否。展示各维度、最弱适用维度、门槛结果和多次运行的分布。初始验收要求全部适用维度有证据且至少 3 分，全部适用门槛通过。NV 不能通过。真人试玩尚未完成时，趣味验证保持待完成状态，不能用加权总分掩盖。
 
-For performance register hardware, resolution, desired frame rate and representative scenes before measuring. Store p50/p95/p99 frame time, visible stalls, sample duration, shader/import warmup versus warm play and content activation. Do not invent a universal threshold or claim smoothness from average FPS. A 60 Hz test's nominal frame budget is 16.7 ms; agreement with a target must be examined with tails and observed stalls. Report memory growth only over the actual measured interval.
+### 效率与可靠性记录
 
-## Observation protocol
+记录首次可玩时间、创作 Agent 声明完成的时间、模型/API 请求、实际报告的 tokens/credits、重复提交、缓存与复用、人工干预。未知费用保持未知，不将订阅费换算成臆测的单次调用金额。效率记录用于找出浪费，不能成为跳过已授权美术生成的理由。失败频率与已完成游戏的质量分开报告。
 
-1. Launch installed `openfun` in an empty directory through the normal creator path, using native JSON/RPC transport only for observation if necessary. Preserve normal extensions/tools. Record transport differences; separately verify actual terminal startup. No test-specific hidden author instructions.
-2. Capture tool start/end, sanitized arguments/result metadata, errors, elapsed time, provider selection and final claims. Save artifacts and immutable first-delivery snapshot outside the author workspace. Strip host tokens/auth, avoid duplicating base64 images in logs. Snapshot hashes and metadata are receipts, not aesthetic proof.
-3. First-time play: try the delivered controls without reading source or accepting author explanations. Record confusion and interventions. Then inspect code/input mappings to automate repeatable paths; label this assisted phase.
-4. Capture normal-speed gameplay (not only menu screenshots), action/reaction/death where applicable, UI states and representative locations. No need for arbitrary fixed screenshot counts; capture evidence for the claimed score.
-5. Play at least three actually visited subsequent units for applicable continuation cases. This is a sampling minimum, not a design quota. Include a later-duration sample, a consequential choice, familiar strategy and reasonable alternative. Generated/prefetched is not played. Do not claim infinite quality from a finite sample.
-6. Correlate Host jobs/provider calls with loaded content IDs, changes in player decisions and persisted consequences. Observe with creator idle/closed. Fault trials separately test pending/failed/invalid data and recovery.
-7. Restart and revisit; compare important saved values and IDs, ensure replay does not regenerate content. Package/import test assets into a fresh directory for G7.
-8. Freeze first-version score before polish. Start product polish only in the designated phase with explicit authorization and record each accepted/reverted round. Report polish delta separately; do not overwrite initial scores.
-9. Score independently from the author's self-report; blind version identity in side-by-side visual/play comparisons when practical. Human disagreements and confidence are retained. Calibrate anchors using shared evidence before treating scores as comparable.
+性能测量前登记硬件、分辨率、目标帧率和代表性场景。保存 p50/p95/p99 帧时间、可见停顿、采样时长、着色器或导入预热与预热后游玩的差异，以及内容激活表现。不设虚构的通用阈值，也不靠平均 FPS 宣称流畅。60 Hz 的名义帧预算为 16.7 ms，是否达到目标还要看尾部帧时间和实际停顿。内存增长只报告实际测量时段内的情况。
 
-## Calibration, regression and stopping
+## 观察流程
 
-Start with A/B calibration runs. They are exploratory observations, not a release-quality baseline. Freeze rubric adjustments after reviewing ambiguities and record changes. Run the formal baseline after calibration without mid-run product changes. Keep the executable/package immutable for each batch.
+1. 在空目录通过正常创作入口启动已安装的 `openfun`。必要时可用原生 JSON/RPC 传输观察，保留正常扩展和工具。记录传输方式差异，并另行验证真实终端启动。不注入测试专用的隐藏指令。
+2. 记录工具开始与结束、脱敏参数和结果元数据、错误、耗时、provider 选择和最终声明。将证据及不可变首版快照保存在创作目录之外。去除 Host token 和认证信息，日志不重复保存 base64 图片。摘要与元数据用于追踪文件，画面质量仍须直接查看。
+3. 首次试玩时，不先读源码，也不接受创作 Agent 的解释，直接尝试交付的操作。记录困惑和人工介入。之后可检查源码与输入映射，自动化可重复路线，但须标记为辅助试玩。
+4. 采集正常速度的游玩过程，覆盖适用的动作、受击、死亡，以及 UI 状态和代表性地点。不能只截图菜单。截图数量按证据需要决定，不设随意的固定张数。
+5. 适用续写的案例至少实际游玩三个后续内容单元，并包含一次更长时间后的观察、有后果的选择、熟悉策略和合理替代策略。三个是采样下限，不是内容设计配额。已生成或预取的内容不等于已游玩，有限样本不能证明无限续写质量。
+6. 将 Host 任务和 provider 调用关联到已加载的内容 ID、玩家决策变化与已保存后果。观察时创作 Agent 须空闲或关闭。等待、失败、无效数据和恢复另做故障测试。
+7. 重启并重访，比较重要存档值和 ID，确认没有重新生成已有内容。为 G7 将资产打包并导入全新目录测试。
+8. Polish 前固定首版评分。仅在已授权的指定评测环节启动 polish，记录每轮接受或回滚结果。单列改进幅度，不覆盖首版分数。
+9. 独立于创作 Agent 的自评进行打分。条件允许时，对照画面和游玩时隐藏版本身份。保留人工分歧和置信度，先用共同证据校准评分，再比较不同结果。
 
-For each issue record the failed objective, evidence, observable effect, scope and suspected cause: conflicting/missing instruction; tool discovery/usability; service transport/outage; runtime/schema capacity; agent execution; game design/art; evaluator defect. One symptom may have several causes. Fix the smallest defensible root cause, not automatically another prompt paragraph.
+## 校准、回归与停止条件
 
-Re-run the same ordinary prompt in a fresh project after a product change, then an unexposed/other-genre prompt. Improving one saved game is not evidence of improved OpenFun. Keep input/model/cache conditions comparable. All attempts, interruptions and service failures remain in the report. Do not select the best of several attempts and call it representative.
+先运行 A/C 校准，用于找出评分歧义。校准结果不能直接作为发布质量基线。讨论歧义后固定评分规则，记录调整；正式基线期间不改产品，同一批使用固定的可执行文件和安装包。
 
-For initial acceptance use at least three independent creations of each core case under the frozen candidate and show each profile; require every applicable dimension >=3 and all gates passed in those acceptance runs. Failed earlier candidates remain visible. Small samples are preliminary evidence, not a statistical reliability guarantee. Human fun remains a separate calibration/acceptance dependency. Repeated no-gain or capability blockers require diagnosis and an honest status, not silently relaxed thresholds or unlimited repetitive trials.
+每个问题记录目标、证据、可见影响、范围和疑似原因。原因可能包括指令缺失或冲突、工具发现与使用、服务或网络故障、运行时或 schema 能力、Agent 执行、游戏设计与美术、评测器缺陷。同一症状可能有多个原因。先找出有证据支持的最小修复，不默认靠增加提示词解决。
 
-## Artifacts and report template
+产品改动后，在新项目重跑同一普通需求，再跑未暴露需求或其他类型需求。修好一个现有游戏不足以证明 OpenFun 改善。输入、模型和缓存条件保持可比，报告保留全部尝试、中断和服务失败，不能只挑最好的一次。
 
-The specification, implementation plan and test harness belong in version control. Large private outputs live in `.output/evaluations/<run-id>/`: registration, sanitized events, first-delivery snapshot, gameplay evidence, job/state receipts, scores, issue log and optional polish reports. Restrict snapshots to test projects; no copied authentication directories. Do not expose credentials in screenshots or shared archives.
+初始验收时，固定候选版本，对 A、C、D、E 每个核心案例至少独立生成三次，逐次展示结果；每次均须全部适用维度至少 3 分、全部适用门槛通过。此前失败的候选结果仍须保留。小样本只能提供初步证据，不能证明统计意义上的可靠性。真人趣味仍须单独校准和验收。反复没有改善或遇到能力阻塞时，诊断并如实报告，不降低门槛，也不无限重复同一试验。
+
+## 产物与报告模板
+
+规范、实施方案和测试工具纳入版本控制。较大的私有产物保存在 `.output/evaluations/<run-id>/`，包括登记、脱敏事件、首版快照、游玩证据、任务和状态记录、评分、问题记录及可选的 polish 报告。快照仅来自测试项目，不复制认证目录。截图和分享包不能泄露凭据。
 
 ```markdown
-# Evaluation <run-id>
+# 评测 <run-id>
 
-- Specification/case/purpose:
-- Product/package digest and model/settings:
-- Environment, caches and available services:
-- Exact prompt and interventions:
-- Outcome: complete / incomplete / blocked
-- Observed duration and units actually played:
+- 规范版本、案例、用途：
+- 产品/安装包摘要、模型与设置：
+- 环境、缓存和可用服务：
+- 原始需求与人工干预：
+- 结果：complete / incomplete / blocked
+- 观察时长与实际游玩的内容单元：
 
-| Gate | Result | Evidence | Attribution/limits |
-| ---- | ------ | -------- | ------------------ |
+| 门槛 | 结果 | 证据 | 归因与局限 |
+| ---- | ---- | ---- | ---------- |
 
-| Dimension | Score or NV/N/A | Positive observation | Gap | Evidence | Confidence/proxy |
-| --------- | --------------- | -------------------- | --- | -------- | ---------------- |
+| 维度 | 分数或 NV/N/A | 评分依据 | 不足 | 证据 | 置信度/是否 proxy |
+| ---- | ------------- | -------- | ---- | ---- | ----------------- |
 
-## Issues
+## 问题
 
-| ID  | Objective | Observed failure | Evidence | Suspected cause | Proposed fix | Retest |
-| --- | --------- | ---------------- | -------- | --------------- | ------------ | ------ |
+| ID  | 目标 | 观察到的问题 | 证据 | 疑似原因 | 修复建议 | 复测 |
+| --- | ---- | ------------ | ---- | -------- | -------- | ---- |
 
-## Usage and timing
+## 用量与耗时
 
-Actual reported amounts, unknowns, reuse and duplicate submissions.
+实际报告的用量、未知项、复用和重复提交。
 
-## First version versus polish
+## 首版与 Polish
 
-Immutable baseline, separately scored changes, regressions and remaining gaps.
+不可变首版、单独评分的修改、回退和剩余问题。
 
-## Verdict
+## 结论
 
-Acceptance status, human-playtest status, unresolved blockers and next experiment.
+验收状态、真人试玩状态、未解决的阻塞及下一次验证。
 ```
 
-## Running registered cases
+## 运行已登记案例
 
-Use Node 22 and `node tests/evaluation/run.mjs --cli /absolute/path/to/installed/openfun/dist/cli.js --case A --model <selected-model-id> --purpose calibration`. A–E use the frozen ordinary prompts above. `--purpose` distinguishes calibration, baseline, candidate, holdout and polish metadata; it does not secretly start product polish. A private pre-registered holdout may use `--case H1 --brief /absolute/path/to/ordinary-brief.txt --purpose holdout`; the exact text is saved in registration, never supplemented with the rubric. Keep the brief outside the author project. The runner records an independent-play target of 1280×800 / 60 Hz without adding it to the author prompt.
+使用 Node 22，在开发仓库执行：
 
-### Unattended authorship and desktop isolation
+```sh
+node tests/evaluation/run.mjs --cli /absolute/path/to/installed/openfun/dist/cli.js --case A --model <selected-model-id> --purpose calibration
+```
 
-Start the registered ordinary brief once and allow OpenFun to finish autonomously. Capture events
-to disk; the evaluator does not coach, edit the generated game, or send corrective prompts during
-a first-delivery run. Review the completed trace and artifacts afterward rather than repeatedly
-watching intermediate tool calls. Report operational interruptions separately. Improvements belong
-in OpenFun and are assessed by a fresh registered candidate run.
+A、C、D、E 使用上表固定需求。执行器在启动评测前拒绝暂缓的 B。`--purpose` 区分 calibration、baseline、candidate、holdout、polish，只记录用途，不会自动启动产品 polish。
 
-Use headless for routine functional tests, and let OpenFun choose windowed checks when visual,
-animation, sound or rendered-performance evidence is needed, without additional user confirmation.
-Batch meaningful checks and avoid desktop input takeover. Headless results alone cannot pass visual,
-audio or GPU-performance gates. Record the actual test mode and evidence; an autonomous rendered
-check is not an evaluator intervention. An isolated rendering environment is preferable when available.
+预先登记的私有 holdout 可使用 `--case H1 --brief /absolute/path/to/ordinary-brief.txt --purpose holdout`。需求须面向 2D，文件放在创作项目之外，原文保存到登记记录，不附加评分规则。执行器记录独立试玩目标为 1280×800 / 60 Hz，不将其注入创作提示。
 
-## v1.2 evidence and regression requirements
+### 自主创作与桌面隔离
 
-### Tie evidence to a project version
+提交已登记需求后，让 OpenFun 自主完成。事件写入磁盘，评审者不在首版生成过程中辅导、修改游戏或发送纠正提示。完成后再审阅过程和产物，不持续干预中间工具调用。操作中断单独报告。改进应落在 OpenFun 中，再通过新的候选评测验证。
 
-Allow greyboxes during development; final delivery must meet the production-art requirements. Record development checks, first delivery, authorized polish and live continuation separately. Keep first-delivery evidence after later repairs. For continuation, save content IDs and state revisions alongside the game version. G4 requires real generation, which a zero-generation-budget preview cannot test.
+常规功能检查使用 headless。需要画面、动画、声音或渲染性能证据时，允许 OpenFun 自行选择窗口检查，无需额外确认。合并相关检查，避免接管桌面输入。Headless 结果不能单独证明视觉、音频或 GPU 性能通过。记录真实测试模式和证据；自主渲染检查不算评审者干预。有隔离渲染环境时优先使用。
 
-For each observation, record the frozen project digest, capture time, scene, input sequence or procedure, and result. Include the test mode, seed and initial state where controlled, capture timestamps or log offsets, and relevant job/content IDs. Save a separate snapshot and report after material edits.
+## 证据与回归要求
 
-Create a manifest of sorted relative paths and SHA-256 file digests for the frozen `game/`, `design/` and `WORLD.md`, excluding generated caches and credentials. The project digest is the SHA-256 of the saved UTF-8 manifest bytes. Keep state/database evidence separately with its revision and digest. An independent reviewer must check that the manifest matches the project used in the observation.
+### 将证据关联到项目版本
 
-Record tool use and player-visible results separately. Use asset receipts to verify sourcing, in-game evidence to assess Q2/Q3/Q9, import logs to check engine compatibility, and motion footage to assess Q4. When an artifact supports several dimensions, explain what it shows for each; do not count one defect more than once. The generated visual target and UI skin remain required as in v1.1.
+开发过程中允许灰盒，最终交付须满足成品美术要求。开发检查、首版、已授权 polish 和真实续写分开记录。后续修复不能替换首版证据。续写还须记录内容 ID、状态修订与游戏版本。G4 要求真实生成，零生成预算的预览无法验证。
 
-### Layered checks and negative controls
+每条观察记录固定项目的摘要、采集时间、场景、输入序列或操作步骤，以及结果。附测试模式、受控时的种子和初始状态、画面时间戳或日志位置、相关 job/content ID。实质修改后另存快照和报告。
 
-| Layer              | What to observe                                                                                                | What it cannot establish alone                           |
-| ------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| Resource structure | Source/license, file hashes, dimensions, frame bounds, pivots, clip names/durations, material/skeleton mapping | Cohesive art or good motion                              |
-| Engine loading     | Native resource import and load, missing references, runtime errors                                            | Reachability, enjoyable decisions or attractive gameplay |
-| Interaction        | Input → state transition → visible/audible consequence; objective/failure/retry; save/revisit                  | All possible states are correct                          |
-| Player experience  | First-time comprehension, real-time motion, choices, later development, human feedback                         | Unlimited future content quality                         |
+为固定的 `game/`、`design/` 和 `WORLD.md` 创建清单，包含排序后的相对路径和各文件的 SHA-256，排除生成缓存和凭据。项目摘要为保存的 UTF-8 清单文件字节的 SHA-256。状态或数据库证据另存，附修订与摘要。独立评审者须核对清单是否对应实际观察的项目。
 
-Before using a new checker, verify that it rejects a relevant known failure: wrong frame bounds or pivot, missing animation, damage outside the contact interval, unintended instant removal on death, unreachable objective, fake completion flag, invalid content, or stale evidence. These are requirements for future checks; they do not describe a completed test suite. Keep fixture results separate from autonomous product trials, and record false positives and limitations. Claims about reachability or solvability must state the modeled rules, initial state and search bounds. Path search alone cannot verify mechanics it does not model.
+工具操作和玩家可见结果分开记录。用资产来源记录核对获取过程，用游戏内证据评估 Q2/Q3/Q9，用导入日志检查引擎兼容性，用动作画面评估 Q4。同一产物支持多个维度时，分别说明依据，不重复计算一个缺陷。视觉目标和 UI 皮肤的生成要求沿用 v1.1。
 
-### Change regression matrix
+### 分层检查与错误样例
 
-| Change                | Required focused observations before broader evaluation                                                                                   |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Art/UI replacement    | Actual gameplay composition, scale/pivot, clipping, hit areas, text/focus states, long text, loading and portability                      |
-| Motion/combat         | Movement, hit and miss, interruption, lethal reaction/cleanup, input responsiveness, audio/contact synchronization                        |
-| Mechanics/progression | Goal → decision → consequence, failure/retry, known viable alternative, save/load, applicable content validation                          |
-| Runtime content       | Real job → validation → publication → activation → play; invalid/slow/error recovery; restart/revisit and preserved identity              |
-| Polish                | Immutable before/after versions, claimed improvement, affected behaviors, regressions, candidate rejection/rollback                       |
-| Latency/cost          | Cold/reused assets, queue/provider/processing/import/activation time, cancellations/retries/duplicate paid submissions, unchanged quality |
+| 层次     | 检查内容                                                                 | 单靠该层无法证明             |
+| -------- | ------------------------------------------------------------------------ | ---------------------------- |
+| 资源结构 | 来源与许可、摘要、尺寸、帧范围、轴心、动作名与时长、适用的材质或骨架映射 | 风格统一、动作好看           |
+| 引擎加载 | 原生资源导入和加载、引用缺失、运行错误                                   | 目标可达、选择有趣、画面好看 |
+| 交互     | 输入、状态变化、可见或可听后果；目标、失败、重试；保存与重访             | 所有可能状态都正确           |
+| 玩家体验 | 首次理解、实时动作、选择、后续发展、真人反馈                             | 无限后续内容的质量           |
 
-After focused checks pass, test the change with fresh ordinary prompts and an unexposed or other-genre case. Release acceptance still requires repeated trials of the frozen candidate, all applicable dimensions >=3, all applicable gates passed, and separately recorded human playtest. Incomplete instrumentation does not justify lower thresholds.
+使用新检查器前，验证它能拒绝相关的已知错误，例如帧范围或轴心错误、动作缺失、非接触时段造成伤害、非预期的死亡瞬间移除、目标不可达、虚假完成标记、无效内容或过期证据。这些是检查器的开发要求，不代表已有完整测试套件。样例测试结果与自主生成评测分开，记录误报和检查局限。宣称可达或可解时，必须写清建模规则、初始状态和搜索范围；路径搜索不能验证没有建模的机制。
 
-To assess Q6, describe the new decision, rule interaction, relationship or consequence encountered during play. Renamed rooms, palette changes, count increases or numerical scaling alone are insufficient. In asset-reuse trials, list the supplied assets, their sources and what was newly created. A trial with a hidden prebuilt game cannot count as an empty-project trial.
+### 修改后的回归检查
 
-Measure queue, provider, transfer, asset processing, import, validation and activation time separately where instrumentation exists; mark the rest unknown. Report time to first playable, completed delivery and later content waits, with cold/warm conditions and reported usage. Include failed attempts, cancellations and paid requests with uncertain outcomes. Compare costs only alongside quality results.
+| 改动         | 全面评测前的针对性检查                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| 美术/UI 替换 | 游戏内构图、比例与轴心、裁剪、命中区域、文字与焦点状态、长文本、加载和可移植性           |
+| 动作/战斗    | 移动、命中与落空、打断、致命受击与清理、输入响应、声音和接触同步                         |
+| 机制/成长    | 目标、决策、后果；失败与重试；已知可行替代策略；存档读写；适用的内容校验                 |
+| 运行时内容   | 真实任务、校验、发布、激活、游玩；无效、缓慢、错误时的恢复；重启重访和身份保留           |
+| Polish       | 不可变前后版本、改进声明、受影响行为、回归、拒绝候选与回滚                               |
+| 延迟/成本    | 冷启动与资产复用、排队/provider/加工/导入/激活耗时、取消/重试/重复付费提交、质量是否保持 |
 
-### Machine-checkable review records
+针对性检查通过后，使用新的普通需求和未暴露或其他类型需求评测。正式验收仍要求固定候选版本的重复试验、全部适用维度至少 3 分、全部适用门槛通过，并单独记录真人试玩。观测工具不完整不能成为降低标准的理由。
 
-The runner registers trials under v1.2. Scoring requires a separate review: after independent observation, write a private `review.json` alongside the run's evidence. Its schema is defined in `tests/evaluation/report.ts`:
+评估 Q6 时，描述游玩中遇到的新决策、规则交互、关系或后果。仅改房间名、换色、加数量或调数值不足以证明。资源复用评测须列出提供的资产、来源和新建部分；暗藏预制游戏的评测不能算空项目评测。
 
-- Top level: `specification`, `runId`, `case`, `phase` (`first-delivery`, `polish`, `continuation`), `projectDigest`, `reviewer`, `outcome` (`complete`, `incomplete`, `blocked`).
-- `evidence`: unique `id`, relative `file`, file `sha256`, `projectDigest`, ISO UTC `capturedAt`, `kind` (`gameplay`, `image`, `audio`, `state`, `performance`, `provenance`, `inspection`, `human-feedback`), `scene`, `procedure`, `observation`. Include precise timestamps/offsets and capture mode in the procedure. The manifest itself may be an inspection artifact.
-- `gates`: exactly one record for each G1–G7 with `id`, `result`, `reason`, `evidence` ID list. Pass/fail requires evidence; N/A requires a reason reviewed against the case.
-- `dimensions`: exactly one record for each Q1–Q10 with `id`, `score` (0–4, NV or N/A), `observation`, `limitation`, `confidence`, `judgment` (`human` or `proxy`), `evidence` ID list. Numeric scores require evidence. An N/A observation explains applicability; missing author work is not N/A.
-- `humanPlaytest`: `status` (`pending`, `completed`), `notes`, `evidence` ID list. Completed requires actual human-feedback evidence, including limitations and unfavorable feedback. Completion does not itself mean positive feedback.
+有观测能力时，分别测量排队、provider、传输、资产加工、导入、校验和激活时间，其余标为未知。记录首次可玩、完整交付和后续内容等待时间，以及冷/热条件和实际用量。纳入失败尝试、取消和结果不确定的付费请求。费用必须结合质量一起比较。
 
-Run `node --import tsx tests/evaluation/validate.ts /absolute/path/to/run/review.json` from the development checkout. It reads files only and uses no model/service quota. Evidence files must resolve inside the report directory; absolute paths, escaping symlinks, missing files, checksum mismatches, mismatched snapshot labels, duplicate IDs and missing references are rejected. Unknown fields and older specification versions are rejected instead of silently migrated.
+### 机器可校验的评测记录
 
-Exit 0 means the record is structurally valid and file checksums match. Exit 1 means the record is invalid or the input could not be read. A valid record may contain low scores or NV. `recordedThresholdsMet` summarizes only the recorded gates, scores and completion status; `productAccepted` always remains false.
+执行器按 v1.3 登记。评分由独立评审完成，之后在证据所在目录保存私有 `review.json`。结构定义见 `tests/evaluation/report.ts`：
 
-An independent reviewer must inspect gameplay, match the manifest to the executed project, check N/A decisions and human-feedback attribution, and decide whether the evidence supports each score. Product acceptance also requires repeated trials and separate human-playtest results. Proxy judgments cannot establish human enjoyment.
+- 顶层：`specification`、`runId`、`case`、`phase`（`first-delivery`、`polish`、`continuation`）、`projectDigest`、`reviewer`、`outcome`（`complete`、`incomplete`、`blocked`）。
+- `evidence`：唯一 `id`、相对路径 `file`、文件 `sha256`、`projectDigest`、ISO UTC 时间 `capturedAt`、`kind`（`gameplay`、`image`、`audio`、`state`、`performance`、`provenance`、`inspection`、`human-feedback`）、`scene`、`procedure`、`observation`。操作步骤中包含准确时间戳或日志位置和采集模式。清单本身可作为 inspection 证据。
+- `gates`：G1–G7 各一条，字段为 `id`、`result`、`reason`、`evidence` ID 列表。通过或失败都需要证据；不适用须说明原因，并按案例核对。
+- `dimensions`：Q1–Q10 各一条，字段为 `id`、`score`（0–4、NV 或 N/A）、`observation`、`limitation`、`confidence`、`judgment`（`human` 或 `proxy`）、`evidence` ID 列表。数值评分需要证据，N/A 的观察说明须解释不适用原因，不能以漏做为理由。
+- `humanPlaytest`：`status`（`pending`、`completed`）、`notes`、`evidence` ID 列表。完成状态必须引用真实的 human-feedback 证据，保留局限和负面反馈；完成不等于正面评价。
+
+在开发仓库运行：
+
+```sh
+node --import tsx tests/evaluation/validate.ts /absolute/path/to/run/review.json
+```
+
+工具只读文件，不消耗模型或服务额度。证据路径必须位于报告目录内。绝对路径、逃逸目录的符号链接、文件缺失、摘要不符、快照标记不符、重复 ID 和无效引用会被拒绝。未知字段和旧版规范也会被拒绝，不自动迁移。
+
+退出码 0 表示记录结构合法且文件摘要匹配，退出码 1 表示记录无效或输入无法读取。低分和 NV 可以出现在合法记录中。`recordedThresholdsMet` 只汇总记录中的门槛、分数与完成状态；`productAccepted` 始终为 false。
+
+独立评审者仍须试玩，核对清单与执行项目，检查 N/A 和真人反馈归属，并判断证据是否支持评分。产品验收还要求重复试验和单列真人试玩结果，不能用 proxy 判断代替真人趣味。

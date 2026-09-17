@@ -30,7 +30,7 @@ const { values } = parseArgs({
 });
 if (!values.cli || !values.case || !values.model)
   throw new Error(
-    "Supply --cli <installed cli.js> --case A|B|C|D|E --model <id>; uses real model/service quota.",
+    "Supply --cli <installed cli.js> --case A|C|D|E --model <id>; uses real model/service quota.",
   );
 if (
   !["calibration", "baseline", "candidate", "holdout", "polish"].includes(
@@ -40,12 +40,15 @@ if (
   throw new Error("Invalid evaluation purpose.");
 if (!/^[A-Za-z0-9_-]{1,40}$/.test(values.case))
   throw new Error("Invalid case ID.");
+if (values.case === "B")
+  throw new Error(
+    "Case B (3D) is deferred; evaluation-v1.3 covers 2D cases A, C, D and E.",
+  );
 const prompts = {
   A: "做一个 2D 俯视角动作探索游戏：我提着灯探索逐渐苏醒的森林遗迹，希望战斗有手感，越往深处走越有意思。直接做出完整第一版，细节你决定。",
-  B: "做一个 3D 海岛探索游戏，我是夜间送信的邮差，逐渐发现一位失踪守塔人的故事。海岛要有吸引力，航行到远处还能发现新的地方。直接做好第一版，细节你决定。",
   C: "做一个 2D 光线解谜游戏，规则容易理解，但后面的谜题能让我重新思考前面学会的东西。直接做出第一版，不要战斗。",
-  D: "做一个小镇调查游戏，我通过对话、线索和选择，发现居民之间隐瞒的往事，希望之后还能发生新的事件。直接做出第一版。",
-  E: "做一个温暖的海边小店经营游戏，收集材料、制作商品、认识客人，希望经营越久越有新的取舍，而不是只等数字变大。直接做出第一版。",
+  D: "做一个 2D 小镇调查游戏，我通过对话、线索和选择，发现居民之间隐瞒的往事，希望之后还能发生新的事件。直接做出第一版。",
+  E: "做一个温暖的 2D 海边小店经营游戏，收集材料、制作商品、认识客人，希望经营越久越有新的取舍，而不是只等数字变大。直接做出第一版。",
 };
 const prompt = values.brief
   ? (await readFile(resolve(values.brief), "utf8")).trim()
@@ -79,7 +82,7 @@ for (const part of ["dist", "tools", "docs"])
 const registration = {
   runId,
   world,
-  specification: "evaluation-v1.2",
+  specification: "evaluation-v1.3",
   purpose: values.purpose,
   case: values.case,
   prompt,

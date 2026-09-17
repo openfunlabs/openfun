@@ -17,7 +17,7 @@ async function fixture() {
     "Engineering fixture, not a generated-game quality observation.";
   await writeFile(join(root, "play.txt"), bytes);
   const report: EvaluationReport = {
-    specification: "evaluation-v1.2",
+    specification: "evaluation-v1.3",
     runId: "fixture",
     case: "A",
     phase: "first-delivery",
@@ -175,15 +175,32 @@ test("rejects stale, fabricated, incomplete and ambiguous evidence records", asy
       result.issues.join("; "),
     );
   }
-  assert.equal(
-    (
-      await validateEvaluationReport(
-        { ...report, specification: "evaluation-v1.1" },
-        root,
-      )
-    ).recordValid,
-    false,
+  for (const specification of ["evaluation-v1.1", "evaluation-v1.2"]) {
+    assert.equal(
+      (await validateEvaluationReport({ ...report, specification }, root))
+        .recordValid,
+      false,
+    );
+  }
+});
+
+test("2D evaluation rejects deferred case B before reading a CLI or creating a trial", () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      fileURLToPath(new URL("../evaluation/run.mjs", import.meta.url)),
+      "--case",
+      "B",
+      "--cli",
+      "/nonexistent/openfun/dist/cli.js",
+      "--model",
+      "fixture",
+    ],
+    { encoding: "utf8" },
   );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Case B \(3D\) is deferred/);
+  assert.doesNotMatch(result.stderr, /ENOENT/);
 });
 
 test("evidence files cannot escape the run directory directly or through symlinks", async (t) => {
