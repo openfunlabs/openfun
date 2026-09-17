@@ -1,6 +1,6 @@
 # OpenFun product evaluation
 
-Specification: `evaluation-v1.2`. This version adds evidence tied to project versions, layered checks, negative controls and regression requirements. Scoring anchors are unchanged and still need empirical calibration. Keep v1.0/v1.1 results under their original versions; changes to cases, anchors or eligibility require a new version. The [quality improvement plan](quality-improvement.md) lists implementation stages and their status.
+Specification: `evaluation-v1.2`. This version adds evidence tied to project versions, layered checks, negative controls and regression requirements. Scoring anchors are unchanged and still need empirical calibration. Keep v1.0/v1.1 results under their original versions; changes to cases, anchors or eligibility require a new version. The [quality improvement plan](quality-improvement.md) defines the full scope and unified acceptance for a single delivery.
 
 ## Purpose and scope
 
