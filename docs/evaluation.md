@@ -1,6 +1,6 @@
 # OpenFun product evaluation
 
-Specification: `evaluation-v1.2` (version-bound evidence, layered checks, negative controls and change regression added). v1.0/v1.1 results remain historical and must not be silently rescored. Status: anchors retained for calibration; empirical calibration is still required. Changes to cases, anchors or eligibility create a new version. See the [quality improvement implementation plan](quality-improvement.md) for delivery stages; a planned capability is not an implemented or verified one.
+Specification: `evaluation-v1.2`. This version adds evidence tied to project versions, layered checks, negative controls and regression requirements. Scoring anchors are unchanged and still need empirical calibration. Keep v1.0/v1.1 results under their original versions; changes to cases, anchors or eligibility require a new version. The [quality improvement plan](quality-improvement.md) lists implementation stages and their status.
 
 ## Purpose and scope
 
@@ -159,13 +159,15 @@ check is not an evaluator intervention. An isolated rendering environment is pre
 
 ## v1.2 evidence and regression requirements
 
-### Delivery phases and evidence identity
+### Tie evidence to a project version
 
-Development greyboxes are legitimate intermediate work, not final production artwork. Keep development checks, first delivery, authorized polish and actual continuation distinct. A later repair cannot replace first-delivery evidence. For continuation, preserve the actual content IDs and state revisions alongside the game version. A successful zero-generation-budget preview cannot satisfy G4.
+Allow greyboxes during development; final delivery must meet the production-art requirements. Record development checks, first delivery, authorized polish and live continuation separately. Keep first-delivery evidence after later repairs. For continuation, save content IDs and state revisions alongside the game version. G4 requires real generation, which a zero-generation-budget preview cannot test.
 
-Bind each observation to a frozen project digest, capture time, scene, input sequence or observation procedure, and observed result. Record test mode, seed/initial state where controlled, capture timestamps or log offsets, and the relevant job/content IDs. Freeze a separate snapshot and report after material edits. Store a manifest of sorted relative paths and SHA-256 file digests for the frozen game/design/WORLD.md snapshot, excluding generated caches and credentials; the project digest is the SHA-256 of the exact saved UTF-8 manifest bytes. Preserve state/database evidence separately with its revision and digest. An independent reviewer checks that the manifest matches the observed project; metadata alone does not prove this.
+For each observation, record the frozen project digest, capture time, scene, input sequence or procedure, and result. Include the test mode, seed and initial state where controlled, capture timestamps or log offsets, and relevant job/content IDs. Save a separate snapshot and report after material edits.
 
-In each report, workflow compliance and player-visible results are distinct observations. Asset tool receipts support sourcing, but visible integration supports Q2/Q3/Q9. An import log supports engine compatibility, but actual motion supports Q4. Record the same artifact against multiple dimensions only with dimension-specific observations; do not double-count a single defect. Keep the required generated visual target and UI skin unchanged from v1.1.
+Create a manifest of sorted relative paths and SHA-256 file digests for the frozen `game/`, `design/` and `WORLD.md`, excluding generated caches and credentials. The project digest is the SHA-256 of the saved UTF-8 manifest bytes. Keep state/database evidence separately with its revision and digest. An independent reviewer must check that the manifest matches the project used in the observation.
+
+Record tool use and player-visible results separately. Use asset receipts to verify sourcing, in-game evidence to assess Q2/Q3/Q9, import logs to check engine compatibility, and motion footage to assess Q4. When an artifact supports several dimensions, explain what it shows for each; do not count one defect more than once. The generated visual target and UI skin remain required as in v1.1.
 
 ### Layered checks and negative controls
 
@@ -176,7 +178,7 @@ In each report, workflow compliance and player-visible results are distinct obse
 | Interaction        | Input → state transition → visible/audible consequence; objective/failure/retry; save/revisit                  | All possible states are correct                          |
 | Player experience  | First-time comprehension, real-time motion, choices, later development, human feedback                         | Unlimited future content quality                         |
 
-Before relying on a new checker, demonstrate that it rejects an appropriate broken fixture: wrong frame bounds/pivot, missing animation, damage outside the contact interval, instant unintended death removal, unreachable objective, fake completion flag, invalid content, or stale evidence. Choose fixtures for the claimed checker; do not treat this as a universal automated test suite already implemented. Passing fixtures never count as autonomous product output. Record false positives and limitations. A reachability or solvability claim must state its modeled rules, initial state and search bounds; a generic path search cannot certify arbitrary mechanics.
+Before using a new checker, verify that it rejects a relevant known failure: wrong frame bounds or pivot, missing animation, damage outside the contact interval, unintended instant removal on death, unreachable objective, fake completion flag, invalid content, or stale evidence. These are requirements for future checks; they do not describe a completed test suite. Keep fixture results separate from autonomous product trials, and record false positives and limitations. Claims about reachability or solvability must state the modeled rules, initial state and search bounds. Path search alone cannot verify mechanics it does not model.
 
 ### Change regression matrix
 
@@ -189,15 +191,15 @@ Before relying on a new checker, demonstrate that it rejects an appropriate brok
 | Polish                | Immutable before/after versions, claimed improvement, affected behaviors, regressions, candidate rejection/rollback                       |
 | Latency/cost          | Cold/reused assets, queue/provider/processing/import/activation time, cancellations/retries/duplicate paid submissions, unchanged quality |
 
-Focused development checks are not release acceptance. After a change, run fresh ordinary prompts and an unexposed or other-genre case. Full acceptance still requires the frozen repeated trials, all applicable dimensions >=3, all applicable gates passed, and separately recorded human playtest. Do not lower thresholds because instrumentation is incomplete.
+After focused checks pass, test the change with fresh ordinary prompts and an unexposed or other-genre case. Release acceptance still requires repeated trials of the frozen candidate, all applicable dimensions >=3, all applicable gates passed, and separately recorded human playtest. Incomplete instrumentation does not justify lower thresholds.
 
-For continuation novelty, name the new decision, rule interaction, relationship or consequence actually encountered. Renamed rooms, palette changes, count increases or numerical scaling alone do not demonstrate Q6. For approved asset reuse, record which assets were supplied, their provenance and what was newly created; hidden prebuilt games invalidate empty-project comparisons.
+To assess Q6, describe the new decision, rule interaction, relationship or consequence encountered during play. Renamed rooms, palette changes, count increases or numerical scaling alone are insufficient. In asset-reuse trials, list the supplied assets, their sources and what was newly created. A trial with a hidden prebuilt game cannot count as an empty-project trial.
 
-Separate queue, provider, transfer, asset processing, import, validation and activation timing where instrumentation exists. Uninstrumented phases remain unknown. Report first playable, completed delivery and later transition waits separately, with cold/warm conditions and actual reported usage. Do not subtract failed attempts or equate lower cost with better quality. Provider failures, cancellations and uncertain paid submissions remain visible.
+Measure queue, provider, transfer, asset processing, import, validation and activation time separately where instrumentation exists; mark the rest unknown. Report time to first playable, completed delivery and later content waits, with cold/warm conditions and reported usage. Include failed attempts, cancellations and paid requests with uncertain outcomes. Compare costs only alongside quality results.
 
 ### Machine-checkable review records
 
-The installed-product runner registers v1.2 but does not generate scores or silently start a review. After independent observation, write a private `review.json` alongside the run's evidence. Its schema is defined in `tests/evaluation/report.ts`:
+The runner registers trials under v1.2. Scoring requires a separate review: after independent observation, write a private `review.json` alongside the run's evidence. Its schema is defined in `tests/evaluation/report.ts`:
 
 - Top level: `specification`, `runId`, `case`, `phase` (`first-delivery`, `polish`, `continuation`), `projectDigest`, `reviewer`, `outcome` (`complete`, `incomplete`, `blocked`).
 - `evidence`: unique `id`, relative `file`, file `sha256`, `projectDigest`, ISO UTC `capturedAt`, `kind` (`gameplay`, `image`, `audio`, `state`, `performance`, `provenance`, `inspection`, `human-feedback`), `scene`, `procedure`, `observation`. Include precise timestamps/offsets and capture mode in the procedure. The manifest itself may be an inspection artifact.
@@ -207,4 +209,6 @@ The installed-product runner registers v1.2 but does not generate scores or sile
 
 Run `node --import tsx tests/evaluation/validate.ts /absolute/path/to/run/review.json` from the development checkout. It reads files only and uses no model/service quota. Evidence files must resolve inside the report directory; absolute paths, escaping symlinks, missing files, checksum mismatches, mismatched snapshot labels, duplicate IDs and missing references are rejected. Unknown fields and older specification versions are rejected instead of silently migrated.
 
-Exit 0 means the record is structurally valid and artifact checksums match; exit 1 means an invalid record or unreadable input. `recordedThresholdsMet` only summarizes the recorded gates/scores and completion status. `productAccepted` is always false: this utility cannot inspect gameplay, verify the manifest against the executed project, judge N/A appropriateness, validate truthful human attribution or decide whether evidence supports a score. Those remain independent review responsibilities. Low scores and NV may be valid records. Human feedback and repeated-run acceptance are assessed separately, without converting proxy judgments into human enjoyment.
+Exit 0 means the record is structurally valid and file checksums match. Exit 1 means the record is invalid or the input could not be read. A valid record may contain low scores or NV. `recordedThresholdsMet` summarizes only the recorded gates, scores and completion status; `productAccepted` always remains false.
+
+An independent reviewer must inspect gameplay, match the manifest to the executed project, check N/A decisions and human-feedback attribution, and decide whether the evidence supports each score. Product acceptance also requires repeated trials and separate human-playtest results. Proxy judgments cannot establish human enjoyment.
