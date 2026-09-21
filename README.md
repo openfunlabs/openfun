@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-OpenFun is an AI role-playing sandbox where players create and enter their own worlds for a graphical, immersive role-playing experience.
+OpenFun is an AI sandbox game where you create, explore, and shape your own worlds—and watch them evolve in response to your actions.
 
 The project is being rebuilt in TypeScript. We will start with a 2D version based on PixiJS, focusing on interactions with characters and the environment, world memory, and lasting consequences. We will move on to a 3D version once the 2D experience works well.
 
