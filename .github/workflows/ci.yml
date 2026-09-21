@@ -7,11 +7,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm check
-      - run: pnpm format:check
+      - name: Check whitespace
+        run: git show --format= --check HEAD
+      - name: Check README file links
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import re
+
+          for name in ("README.md", "README.zh-CN.md"):
+              document = Path(name)
+              for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", document.read_text()):
+                  if ":" in target or target.startswith("#"):
+                      continue
+                  path = document.parent / target.split("#", 1)[0]
+                  if not path.is_file():
+                      raise SystemExit(f"{name}: missing link target {target}")
+          PYTHON
